@@ -1,0 +1,98 @@
+@import "tailwindcss";
+html,
+body {
+  overflow-x: hidden !important;
+  height: 100% !important;
+  margin: 0 !important;
+}
+body {
+  font-size: 16px !important;
+}
+
+
+.raleway-100 {
+  font-family: "Raleway", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 100;
+  font-style: normal;
+}
+.raleway-200 {
+  font-family: "Raleway", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 200;
+  font-style: normal;
+}
+.raleway-300 {
+  font-family: "Raleway", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+}
+.raleway-400 {
+  font-family: "Raleway", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+.raleway-500 {
+  font-family: "Raleway", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+}
+.raleway-600 {
+  font-family: "Raleway", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+}
+.raleway-700 {
+  font-family: "Raleway", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
+}
+.raleway-800 {
+  font-family: "Raleway", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 800;
+  font-style: normal;
+}
+.raleway-900 {
+  font-family: "Raleway", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.intro-paragraph {
+  font-size: 0.875rem;
+  font-size: clamp(0.875rem, 0.8rem + 0.375vw, 1.25rem);
+}
+li a {
+  color: #333333 !important;
+}
+li a:hover {
+  color: #f15a24 !important;
+}
+.logout{
+   color: #333333 !important;
+}
+.logout:hover{
+   color: #f15a24 !important;
+}
+.landing-btn {
+  background-color: #f15a24;
+  color: white;
+}
+.landing-btn:hover {
+  background-color: #9f2e05;
+  color: white;
+}
+
+p {
+  color: #333333;
+}
+.features-section {
+  background-color: #f9f9f9;
+}

@@ -1,0 +1,15 @@
+.location-section {
+  background-image: url("/Images/Location/Location.png");
+  background-size: cover;
+  background-attachment: fixed; /* This makes it scroll with content */
+}
+
+.location-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.location-text {
+  color: white;
+  background-color: #f15a24;
+}

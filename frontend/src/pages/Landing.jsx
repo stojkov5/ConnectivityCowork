@@ -1,0 +1,33 @@
+import LandingJumbo from "../components/LandingPage/LandingJumbo";
+import Intro from "../components/LandingPage/Intro";
+import Community from "../components/LandingPage/Community";
+import Locations from "../components/LandingPage/Locations";
+import Features from "../components/LandingPage/Features";
+import PhotoSlider from "../components/PhotoSlider";
+
+const Landing = () => {
+  return (
+    <>
+      <div>
+        <LandingJumbo />
+      </div>
+      <div>
+        <Intro />
+      </div>
+      <div className="py-12 bg-gray-100">
+        <PhotoSlider />
+      </div>
+      <div className="py-12 bg-gray-100">
+        <Community />
+      </div>
+      <div>
+        <Features />
+      </div>
+      <div className="mb-5">
+        <Locations />
+      </div>
+    </>
+  );
+};
+
+export default Landing;
