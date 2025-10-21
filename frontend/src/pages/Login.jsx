@@ -11,7 +11,8 @@ function Login() {
   const navigate = useNavigate();
 
   const loginMutation = useMutation({
-    mutationFn: (user) => axios.post("http://localhost:5000/api/auth/login", user),
+    mutationFn: (user) =>
+      axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, user),
     onSuccess: (res) => {
       localStorage.setItem("token", res.data.token);
       setIsLoggedIn(true);
@@ -23,7 +24,8 @@ function Login() {
     },
   });
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -34,9 +36,27 @@ function Login() {
     <div className="p-10">
       <h1 className="text-2xl mb-4">Login</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-md">
-        <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
-        <input type="password" name="password" placeholder="Password" value={form.password} onChange={handleChange} required />
-        <button type="submit" className="bg-green-500 text-white py-2" disabled={loginMutation.isLoading}>
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          required
+        />
+        <button
+          type="submit"
+          className="bg-green-500 text-white py-2"
+          disabled={loginMutation.isLoading}
+        >
           {loginMutation.isLoading ? "Logging in..." : "Login"}
         </button>
       </form>

@@ -12,7 +12,8 @@ function Register() {
 
   // Mutation for register
   const registerMutation = useMutation({
-    mutationFn: (newUser) => axios.post("http://localhost:5000/api/auth/register", newUser),
+    mutationFn: (newUser) =>
+      axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, newUser),
     onSuccess: (res) => {
       setMessage(res.data.message || "Registration successful!");
 
