@@ -9,7 +9,7 @@ const Layout = () => {
   return (
     <div className="flex-col">
       <NavBar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
-      <main className="flex-1">
+      <main className="flex-1 min-h-screen  mx-auto">
         <Outlet />
       </main>
       <Footer />

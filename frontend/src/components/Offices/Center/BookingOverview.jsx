@@ -1,57 +1,62 @@
-import React, { useMemo } from "react";
-import { Table, Button } from "antd";
-import VirtualList from "rc-virtual-list";
+/* eslint-disable no-unused-vars */
+// BookingOverview.jsx
+import React from "react";
+import { List, Tag, Empty, Popconfirm, Button } from "antd";
+import dayjs from "dayjs";
 
-const containerHeight = 400; // height for scrollable area
+const BookingOverview = ({ reservations = [], seats = [], onDelete, showDelete = false }) => {
+  const getSeatName = (seatId, officeId) => {
+    const seat = seats.find((s) => s.id === seatId);
+    return seat ? seat.name : seatId;
+  };
 
-const BookingOverview = ({ reservations }) => {
-  // Prepare table data
-  const data = useMemo(
-    () =>
-      reservations.map((res, index) => ({
-        key: index,
-        seatName: res.seatName,
-        date: res.date,
-        slot: res.slot,
-        original: res, // keep original for deletion
-      })),
-    [reservations]
-  );
+  if (!reservations || reservations.length === 0) {
+    return <Empty description="No reservations yet" />;
+  }
 
-  const columns = useMemo(() => [
-    { title: "Seat", dataIndex: "seatName", key: "seatName" },
-    { title: "Date", dataIndex: "date", key: "date" },
-    { title: "Time Slot", dataIndex: "slot", key: "slot" },
-  ], []);
+  const sorted = [...reservations].sort((a, b) => {
+    if (a.startDate === b.startDate) return a.seatId.localeCompare(b.seatId);
+    return dayjs(a.startDate).isBefore(dayjs(b.startDate)) ? -1 : 1;
+  });
 
   return (
-    <div style={{ maxHeight: containerHeight, overflow: "auto" }}>
-      <Table
-        dataSource={data}
-        columns={columns}
-        pagination={false}
-        components={{
-          body: () => (
-            <VirtualList
-              data={data}
-              height={containerHeight}
-              itemHeight={54} // approximate row height
-              itemKey="key"
-            >
-              {(item) => (
-                <tr key={item.key}>
-                  {columns.map((col) => (
-                    <td key={col.key}>
-                      {col.render
-                        ? col.render(null, item)
-                        : item[col.dataIndex]}
-                    </td>
-                  ))}
-                </tr>
-              )}
-            </VirtualList>
-          ),
-        }}
+    <div style={{ maxHeight: 480, overflow: "auto" }}>
+      <List
+        itemLayout="vertical"
+        dataSource={sorted}
+        renderItem={(res) => (
+          <List.Item
+            key={`${res.officeId}-${res.seatId}-${res.startDate}-${res.endDate}`}
+            actions={
+              showDelete
+                ? [
+                    <Popconfirm
+                      key="del"
+                      title="Delete this reservation?"
+                      onConfirm={() => onDelete && onDelete(res)}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button danger size="small">
+                        Delete
+                      </Button>
+                    </Popconfirm>,
+                  ]
+                : []
+            }
+          >
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <Tag>{res.officeName || res.officeId}</Tag>
+              <Tag>{getSeatName(res.seatId)}</Tag>
+              <Tag color="default">{res.startDate}</Tag>
+              <Tag color="default">{res.endDate}</Tag>
+              <Tag color="processing">{res.type}</Tag>
+            </div>
+            <div style={{ marginTop: 6, color: "#666", fontSize: 12 }}>
+              Created: {dayjs(res.createdAt).format("YYYY-MM-DD HH:mm")}
+            </div>
+          </List.Item>
+        )}
       />
     </div>
   );

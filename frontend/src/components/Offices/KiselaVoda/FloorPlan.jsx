@@ -1,3 +1,4 @@
+// FloorPlan.jsx
 import React from "react";
 
 const statusColors = { free: "#00ff00", taken: "#ff0000" };
@@ -14,7 +15,7 @@ const getPathD = (id) =>
     "room-8": "M575 541.5H862V718H575V541.5Z",
   }[id] || "");
 
-const FloorPlan = React.memo(({ rooms, selectedDate, onRoomClick }) => (
+const FloorPlan = React.memo(({ rooms = [], selectedDate, onRoomClick }) => (
   <div style={{ position: "relative", width: "100%", paddingBottom: "70%" }}>
     <img
       src="/KiselaVoda.svg"
@@ -43,8 +44,8 @@ const FloorPlan = React.memo(({ rooms, selectedDate, onRoomClick }) => (
           d={getPathD(room.id)}
           fill={statusColors[room.status] || "#ccc"}
           fillOpacity="0.5"
-          style={{ cursor: "pointer", transition: "fill 0.3s ease" }}
-          onClick={() => selectedDate && onRoomClick(room)}
+          style={{ cursor: selectedDate ? "pointer" : "not-allowed", transition: "fill 0.3s ease" }}
+          onClick={() => selectedDate && onRoomClick({ ...room, selectedDate })}
           onMouseEnter={(e) => (e.target.style.fillOpacity = "0.7")}
           onMouseLeave={(e) => (e.target.style.fillOpacity = "0.5")}
         />

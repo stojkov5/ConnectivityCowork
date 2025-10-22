@@ -42,37 +42,37 @@ const NavBar = ({ isLoggedIn, setIsLoggedIn }) => {
 
           {/* Desktop links */}
           <Col lg={14} className="hidden lg:block">
-            <ul className="flex justify-evenly text-lg">
-              <li className="px-5">
+            <ul className="flex justify-center text-lg gap-3">
+              <li className="">
                 <HashLink smooth to="/#welcome">
                   HOME
                 </HashLink>
               </li>
-              <li className="px-5">
+              <li className="">
                 <HashLink smooth to="/#community">
                   COMMUNITY
                 </HashLink>
               </li>
-              <li className="px-5">
+              <li className="">
                 <NavLink to="/contact">CONTACT</NavLink>
               </li>
-              <li className="px-5">
+              <li className="">
                 <NavLink to="/officedetails">SPACES</NavLink>
               </li>
 
               {!isLoggedIn && (
                 <>
-                  <li className="px-5">
+                  <li className="">
                     <NavLink to="/login">LOGIN</NavLink>
                   </li>
-                  <li className="px-5">
+                  <li className="">
                     <NavLink to="/register">REGISTER</NavLink>
                   </li>
                 </>
               )}
 
               {isLoggedIn && (
-                <li className="px-5">
+                <li className="">
                   <button className="logout" onClick={handleLogout}>
                     LOGOUT
                   </button>

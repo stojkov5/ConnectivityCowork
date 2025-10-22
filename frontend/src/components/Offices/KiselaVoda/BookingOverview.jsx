@@ -1,3 +1,4 @@
+// BookingOverview.jsx
 import React from "react";
 import { List, Tag, Empty } from "antd";
 import dayjs from "dayjs";
@@ -13,8 +14,8 @@ const BookingOverview = ({ reservations = [], rooms = [] }) => {
   }
 
   const sorted = [...reservations].sort((a, b) => {
-    if (a.date === b.date) return a.slot.localeCompare(b.slot);
-    return dayjs(a.date).isBefore(dayjs(b.date)) ? -1 : 1;
+    if (a.startDate === b.startDate) return a.roomId.localeCompare(b.roomId);
+    return dayjs(a.startDate).isBefore(dayjs(b.startDate)) ? -1 : 1;
   });
 
   return (
@@ -23,16 +24,14 @@ const BookingOverview = ({ reservations = [], rooms = [] }) => {
         itemLayout="vertical"
         dataSource={sorted}
         renderItem={(res) => (
-          <List.Item
-            key={`${res.roomId}-${res.date}-${res.slot}`}
-            actions={[
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <Tag>{res.roomName || getRoomName(res.roomId)}</Tag>
-                <Tag color="default">{res.date}</Tag>
-                <Tag color="processing">{res.slot}</Tag>
-              </div>,
-            ]}
-          />
+          <List.Item key={`${res.roomId}-${res.startDate}-${res.endDate}`}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <Tag>{getRoomName(res.roomId)}</Tag>
+              <Tag color="default">{res.startDate}</Tag>
+              <Tag color="default">{res.endDate}</Tag>
+              <Tag color="processing">{res.type}</Tag>
+            </div>
+          </List.Item>
         )}
       />
     </div>
