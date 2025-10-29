@@ -1,55 +1,44 @@
 import { Link } from "react-router-dom";
 import { Row, Col } from "antd";
 import TypeOfBooking from "../components/Offices/TypeOfBooking";
-const About = () => {
+import "../styles/OfficeDetails.css";
+
+const OfficeDetails = () => {
   return (
     <Row
       gutter={[16, 16]}
       justify="center"
       align="middle"
-      className="text-center mb-5"
+      className="office-details-container mx-auto"
     >
-      <Col span={24} className="text-white raleway-600">
-        <h2 className="text-3xl raleway-600 mb-6">LOCATIONS</h2>
-        <p className="raleway-300 text-2xl location-text inline-block px-3 py-2 rounded-2xl">
-          Office Details
-        </p>
-        <TypeOfBooking />
+      <Col span={24} className="office-header">
+        <h2 className="office-title my-3">OFFICE DETAILS</h2>
       </Col>
-      <Col md={12} className="text-white z-10 w-full location-image">
-        <Link to="/kiselavoda" className="relative inline-block w-96 h-60">
+
+      <Col md={12} className="office-image-wrapper">
+        <Link to="/kiselavoda" className="office-image-link">
           <img
-            className="w-full h-full rounded-2xl object-cover"
+            className="office-image"
             src="/Images/Location/KiselaVoda.webp"
             alt="Kisela Voda"
           />
-          <p
-            className="absolute inset-0 flex items-center justify-center 
-               text-2xl font-semibold location-text
-               rounded-2xl px-4 py-2 w-fit h-fit m-auto z-10"
-          >
-            KISELA VODA
-          </p>
+          <p className="office-image-text">KISELA VODA</p>
         </Link>
       </Col>
-      <Col md={12} className="text-white  z-10 w-full location-image">
-        <Link to="/center" className="relative inline-block w-96 h-60">
+
+      <Col md={12} className="office-image-wrapper">
+        <Link to="/center" className="office-image-link">
           <img
-            className="w-full h-full rounded-2xl object-cover"
+            className="office-image"
             src="/Images/Location/Centar.webp"
-            alt="CENTAR "
+            alt="CENTAR"
           />
-          <p
-            className="absolute inset-0 flex items-center justify-center 
-               text-2xl font-semibold location-text
-               rounded-2xl px-4 py-2 w-fit h-fit m-auto z-10"
-          >
-            CENTAR
-          </p>
+          <p className="office-image-text">CENTAR</p>
         </Link>
       </Col>
+      <TypeOfBooking />
     </Row>
   );
 };
 
-export default About;
+export default OfficeDetails;

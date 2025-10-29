@@ -5,6 +5,7 @@ import Locations from "../components/LandingPage/Locations";
 import Features from "../components/LandingPage/Features";
 import PhotoSlider from "../components/PhotoSlider";
 import SocialProof from "../components/LandingPage/SocialProof";
+import Coffee from "../components/LandingPage/Coffee";
 const Landing = () => {
   return (
     <>
@@ -22,6 +23,9 @@ const Landing = () => {
       </div> */}
       <div className="py-12 bg-gray-100">
         <Community />
+      </div>
+      <div>
+        <Coffee />
       </div>
       <div>
         <Features />
