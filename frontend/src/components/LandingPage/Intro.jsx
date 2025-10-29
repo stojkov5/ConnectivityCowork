@@ -1,53 +1,37 @@
-import {
-  Monitor,
-  Clock2,
-  MapPinCheck,
-  Wifi,
-  MicOff,
-  Coffee,
-} from "lucide-react";
-
-const features = [
-  {
-    icon: <Monitor className="w-10 h-10 text-gray-600" />,
-    text: "Designated Desk",
-  },
-  {
-    icon: <Clock2 className="w-10 h-10 text-gray-600" />,
-    text: "24/h access",
-  },
-  {
-    icon: <MapPinCheck className="w-10 h-10 text-gray-600" />,
-    text: "Central Location",
-  },
-  {
-    icon: <Wifi className="w-10 h-10 text-gray-600" />,
-    text: "Fiber Internet",
-  },
-  {
-    icon: <MicOff className="w-10 h-10 text-gray-600" />,
-    text: "Quiet room for your phone calls",
-  },
-  {
-    icon: <Coffee className="w-10 h-10 text-gray-600" />,
-    text: "Complimentary Coffee",
-  },
-];
+import { Row, Col } from "antd";
 
 const Features = () => {
   return (
-    <section className="py-12 px-6 md:px-12 features-section">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-12 gap-x-8 text-center">
-        {features.map((feature, index) => (
-          <div
-            key={index}
-            className="flex flex-col items-center justify-center gap-4 text-gray-700"
-          >
-            {feature.icon}
-            <p className="text-lg leading-snug max-w-xs">{feature.text}</p>
-          </div>
-        ))}
-      </div>
+    <section className="bg-gray-100 py-5">
+      <Row
+        justify="center"
+        align="middle"
+        className="container  mx-auto text-center raleway-300"
+      >
+        <Col xs={24} md={22} className=" rounded-2xl shadow-2xl p-5">
+          <h1 className="text-3xl raleway-600 text-center">WELCOME</h1>
+          <p className="intro-paragraph">
+            Cowork Konnectivity is your gateway to a network of expanding
+            coworking and office spaces in Skopje, Macedonia. Our spaces in the
+            city center and Kisela Voda are hubs of creativity and productivity,
+            where entrepreneurs, startups, and established companies come
+            together to thrive.
+          </p>
+          <p className="intro-paragraph">
+            At Cowork Konnectivity, we believe that an inspiring environment is
+            key to success. That's why we offer a range of amenities and
+            flexible membership options tailored to meet your evolving needs.
+            Whether you're just starting out or looking to upgrade your
+            workspace, you'll find a supportive community and a space that
+            sparks innovation.
+          </p>
+          <p className="intro-paragraph">
+            Join us at Cowork Konnectivity, where flexibility meets inspiration,
+            and let your business flourish in one of our beautifully designed
+            spaces.
+          </p>
+        </Col>
+      </Row>
     </section>
   );
 };

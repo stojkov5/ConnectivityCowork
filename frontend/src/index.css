@@ -7,8 +7,14 @@ body {
 }
 body {
   font-size: 16px !important;
+  
 }
-
+.section-header {
+  font-size: 1.75rem;
+  font-size: clamp(2.25rem, 1.5rem + 2.5vw, 3.5rem);
+  font-weight: 300;
+  color: #333333;
+}
 
 .raleway-100 {
   font-family: "Raleway", sans-serif;
@@ -75,11 +81,11 @@ li a {
 li a:hover {
   color: #f15a24 !important;
 }
-.logout{
-   color: #333333 !important;
+.logout {
+  color: #333333 !important;
 }
-.logout:hover{
-   color: #f15a24 !important;
+.logout:hover {
+  color: #f15a24 !important;
 }
 .landing-btn {
   background-color: #f15a24;

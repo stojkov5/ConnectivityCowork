@@ -4,7 +4,7 @@ import Community from "../components/LandingPage/Community";
 import Locations from "../components/LandingPage/Locations";
 import Features from "../components/LandingPage/Features";
 import PhotoSlider from "../components/PhotoSlider";
-
+import SocialProof from "../components/LandingPage/SocialProof";
 const Landing = () => {
   return (
     <>
@@ -12,11 +12,14 @@ const Landing = () => {
         <LandingJumbo />
       </div>
       <div>
+        <SocialProof />
+      </div>
+      <div>
         <Intro />
       </div>
-      <div className="py-12 bg-gray-100">
+      {/* <div className="py-12 bg-gray-100">
         <PhotoSlider />
-      </div>
+      </div> */}
       <div className="py-12 bg-gray-100">
         <Community />
       </div>

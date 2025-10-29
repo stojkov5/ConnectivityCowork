@@ -6,7 +6,7 @@ import BookingOverview from "./BookingOverview";
 import FloorPlan from "./FloorPlan";
 import ReservationModal from "./ReservationModal";
 import PhotoSlider from "../../PhotoSlider";
-import TypeOfBooking from "./TypeOfBooking";
+// import TypeOfBooking from "./TypeOfBooking";
 // ===== Constants =====
 const initialRooms = [
   { id: "room-1", name: "Room 1" },
@@ -218,8 +218,8 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
       <Col span={20}>
         <div className="kiselavoda-wrapper" style={{ margin: "3rem auto" }}>
           <h2 className="text-center text-3xl raleway-600 mb-6">KISELA VODA</h2>
-          {/* <PhotoSlider /> */}
-          <TypeOfBooking/>
+          <PhotoSlider />
+          {/* <TypeOfBooking/> */}
           <Row gutter={[16, 16]} className="my-5">
             {/* LEFT SIDE */}
             <Col xs={24} md={6}>
