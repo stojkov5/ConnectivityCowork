@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext.jsx";
+import { Row, Col } from "antd";
+import "../styles/Login.css"; // <-- custom css file
 
 function Login() {
   const { setIsLoggedIn } = useAuth();
@@ -33,35 +35,49 @@ function Login() {
   };
 
   return (
-    <div className="p-10">
-      <h1 className="text-2xl mb-4">Login</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-md">
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          required
-        />
-        <button
-          type="submit"
-          className="bg-green-500 text-white py-2"
-          disabled={loginMutation.isLoading}
-        >
-          {loginMutation.isLoading ? "Logging in..." : "Login"}
-        </button>
-      </form>
-      {message && <p className="mt-4">{message}</p>}
-    </div>
+    <Row className="login-container min-h-screen flex items-center justify-center raleway-600">
+      <Col xs={22} sm={16} md={10} lg={8} xl={6}>
+        <div className="login-box bg-white p-8 shadow-xl rounded-xl">
+          <h1 className="text-3xl  text-center mb-6">
+            LOGIN
+          </h1>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 raleway-300">
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={form.email}
+              onChange={handleChange}
+              required
+              className="login-input"
+            />
+
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={form.password}
+              onChange={handleChange}
+              required
+              className="login-input"
+            />
+
+            <button
+              type="submit"
+              className="login-btn"
+              disabled={loginMutation.isLoading}
+            >
+              {loginMutation.isLoading ? "Logging in..." : "Login"}
+            </button>
+          </form>
+
+          {message && (
+            <p className="mt-4 text-center text-gray-700 font-medium">{message}</p>
+          )}
+        </div>
+      </Col>
+    </Row>
   );
 }
 

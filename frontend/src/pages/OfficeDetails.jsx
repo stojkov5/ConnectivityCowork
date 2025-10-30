@@ -13,9 +13,10 @@ const OfficeDetails = () => {
     >
       <Col span={24} className="office-header">
         <h2 className="office-title my-3">OFFICE DETAILS</h2>
+        <span className="text-gray-400">Choose between the two locations down below</span>
       </Col>
 
-      <Col md={12} className="office-image-wrapper">
+      <Col md={12} className="office-image-wrapper justify-end ">
         <Link to="/kiselavoda" className="office-image-link">
           <img
             className="office-image"
@@ -26,7 +27,7 @@ const OfficeDetails = () => {
         </Link>
       </Col>
 
-      <Col md={12} className="office-image-wrapper">
+      <Col md={12} className="office-image-wrapper justify-baseline ">
         <Link to="/center" className="office-image-link">
           <img
             className="office-image"

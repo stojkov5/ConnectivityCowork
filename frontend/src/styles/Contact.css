@@ -1,0 +1,49 @@
+.contact-container {
+  background: #ff8c00;
+  height: 100vh; 
+    display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Info Box */
+.contact-box {
+  border: 2px solid rgba(255, 127, 35, 0.2);
+}
+
+/* Labels + Styling */
+.contact-label {
+  font-weight: 600;
+  color: #ff7f23;
+  font-size: 1.1rem;
+  margin-bottom: 2px;
+}
+
+.contact-info {
+  font-size: 1.05rem;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+/* Carousel box */
+.carousel-box {
+  height: 350px;
+  background: white;
+  border: 2px solid rgba(255, 127, 35, 0.2);
+}
+
+/* Placeholder style (until you add real images) */
+.carousel-placeholder {
+  height: 350px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: #666;
+  background: linear-gradient(
+    to bottom right,
+    rgba(255,127,35,0.2),
+    rgba(255,127,35,0.05)
+  );
+}

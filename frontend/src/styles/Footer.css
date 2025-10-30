@@ -1,0 +1,28 @@
+.footer-container {
+  background: #ffffff;
+  border-top: 2px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Logo sizing */
+.footer-logo {
+  height: 45px;
+  width: auto;
+  margin: 0 auto;
+}
+
+/* Social Icons */
+.footer-icon {
+  font-size: 1.4rem;
+  color: #ff7f23;
+  transition: 0.2s;
+}
+
+.footer-icon:hover {
+  transform: scale(1.15);
+  color: #e66f1f;
+}
+.footer-socials {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}

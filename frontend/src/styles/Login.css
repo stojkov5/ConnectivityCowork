@@ -1,0 +1,35 @@
+.login-container {
+  background: linear-gradient(135deg, #ff7f23, #ff8c00);
+}
+
+.login-box {
+  border: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Inputs */
+.login-input {
+  border: 2px solid #e5e5e5;
+  padding: 12px;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+.login-input:focus {
+  border-color: #ff7f23;
+  box-shadow: 0 0 8px rgba(255, 127, 35, 0.4);
+  outline: none;
+}
+
+/* Button */
+.login-btn {
+  background-color: #ff8c00;
+  color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.login-btn:hover {
+  background-color: #e66f1f;
+}
