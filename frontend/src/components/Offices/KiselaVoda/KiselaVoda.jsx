@@ -214,7 +214,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
   );
 
   return (
-    <Row justify="center">
+    <Row justify="center" className="py-20">
       <Col span={20}>
         <div className="kiselavoda-wrapper" style={{ margin: "3rem auto" }}>
           <h2 className="text-center text-3xl raleway-600 mb-6">KISELA VODA</h2>

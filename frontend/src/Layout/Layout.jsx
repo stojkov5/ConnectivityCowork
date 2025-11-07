@@ -7,9 +7,9 @@ const Layout = () => {
   const { isLoggedIn, setIsLoggedIn } = useAuth();
 
   return (
-    <div className="flex-col">
+    <div>
       <NavBar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
-      <main className="flex-1 min-h-screen  mx-auto">
+      <main >
         <Outlet />
       </main>
       <Footer />

@@ -1,7 +1,10 @@
+import { Row, Col } from "antd";
+import "../../styles/LandingJumbo.css";
+
 const LandingJumbo = () => {
   return (
-    <div className="relative w-full h-screen overflow-hidden raleway-400">
-      {/* Background Video */}
+    <div className="w-full h-screen overflow-hidden relative">
+      {/* Background Video - Fixed/Static */}
       <video
         autoPlay
         loop
@@ -11,26 +14,30 @@ const LandingJumbo = () => {
         crossOrigin="anonymous"
       >
         <source src="/Videos/LandingVideo.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
       </video>
 
-      {/* Overlay (optional: for contrast) */}
-      <div className="absolute inset-0 bg-black opacity-50 z-0"></div>
-
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center gap-5 h-full text-center text-white px-4">
-        <h1 className="text-4xl md:text-6xl font-bold">
-          Co-working in the heart of Skopje
-        </h1>
-        <h2>
-          Your cozy workplace: Affordable, Quiet, and Surrounded by Downtown
-          Delights
-        </h2>
-        <div className="flex flex-col sm:flex-row ">
-          <button className="landing-btn px-4 py-2 rounded-full text-lg transition">
-            Book Now
-          </button>
-        </div>
+      <div className="relative z-10 flex items-center justify-center px-6 sm:px-12 h-full">
+        <Row justify="center" className="w-full">
+          <Col xs={24} sm={20} md={16} lg={10}>
+            <div className="text-center">
+              <h1 className="raleway-600 text-white font-bold leading-tight text-[32px] sm:text-[48px] lg:text-[64px] mb-4 tracking-tight animate-fadeUp">
+                Co-Working in the
+                <br />
+                <span className="text-[#ff8c00]">heart of Skopje</span>
+              </h1>
+
+              <p className="raleway-300 sub-header text-base sm:text-lg lg:text-xl mb-8 animate-fadeUp delay-200 raleway-300">
+                Your cozy workplace: Affordable, Quiet, and Surrounded by
+                Downtown Delights
+              </p>
+
+              <button className="landing-btn px-8 py-3 rounded-full font-semibold text-lg animate-fadeUp delay-300">
+                BOOK NOW
+              </button>
+            </div>
+          </Col>
+        </Row>
       </div>
     </div>
   );

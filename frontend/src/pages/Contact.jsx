@@ -15,7 +15,7 @@ function Contact() {
 
               <div className="contact-item mb-5">
                 <p className="contact-label">Email:</p>
-                <p className="contact-info">info@coworkconnectivity.com</p>
+                <p className="contact-info">contact@coworkonnectivity.com</p>
               </div>
 
               <div className="contact-item mb-5">

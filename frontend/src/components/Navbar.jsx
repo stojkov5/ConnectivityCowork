@@ -1,3 +1,4 @@
+// Updated Navbar.jsx with floating pill style
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { FiMenu, FiX } from "react-icons/fi";
@@ -6,7 +7,6 @@ import { HashLink } from "react-router-hash-link";
 
 const NavBar = ({ isLoggedIn, setIsLoggedIn }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-
   const toggleMenu = () => setMenuOpen((prev) => !prev);
 
   const handleLogout = () => {
@@ -15,97 +15,120 @@ const NavBar = ({ isLoggedIn, setIsLoggedIn }) => {
   };
 
   return (
-    <nav className="bg-white px-4 w-full z-50 raleway-400">
-      <div className="max-w-7xl mx-auto py-4">
-        <Row align="middle" justify="space-between" >
-          {/* Logo */}
-          <Col xs={12} lg={4}>
-            <div className="hidden md:block">
+    <>
+      <nav className="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] md:w-[90%] shadow-xl rounded-full backdrop-blur-xl bg-white/80 border border-gray-200 z-50 raleway-400">
+        <div className="py-3 px-6">
+          <Row align="middle" justify="space-between">
+            {/* Logo */}
+            <Col xs={12} lg={4}>
               <NavLink to="/">
                 <img
-                  className="w-48"
+                  className="hidden md:block w-40"
                   src="/Images/Logo1.png"
                   alt="Desktop Logo"
                 />
-              </NavLink>
-            </div>
-            <div className="md:hidden">
-              <NavLink to="/">
                 <img
-                  className="w-20"
+                  className="md:hidden w-16"
                   src="/Images/Logo2.png"
                   alt="Mobile Logo"
                 />
               </NavLink>
-            </div>
-          </Col>
+            </Col>
 
-          {/* Desktop links */}
-          <Col lg={14} className="hidden lg:block">
-            <ul className="flex justify-center text-lg gap-3">
-              <li className="">
-                <HashLink smooth to="/#welcome">
-                  HOME
-                </HashLink>
-              </li>
-              <li className="">
-                <HashLink smooth to="/#community">
-                  COMMUNITY
-                </HashLink>
-              </li>
-              <li className="">
-                <NavLink to="/contact">CONTACT</NavLink>
-              </li>
-              <li className="">
-                <NavLink to="/officedetails">SPACES</NavLink>
-              </li>
-
-              {!isLoggedIn && (
-                <>
-                  <li className="">
-                    <NavLink to="/login">LOGIN</NavLink>
-                  </li>
-                  <li className="">
-                    <NavLink to="/register">REGISTER</NavLink>
-                  </li>
-                </>
-              )}
-
-              {isLoggedIn && (
-                <li className="">
-                  <button className="logout" onClick={handleLogout}>
-                    LOGOUT
-                  </button>
+            {/* Desktop Links */}
+            <Col lg={14} className="hidden lg:block">
+              <ul className="flex justify-center items-center gap-6 text-[17px] font-medium text-black">
+                <li>
+                  <HashLink
+                    smooth
+                    to="/#welcome"
+                    className="hover:text-[#ff8c00] transition"
+                  >
+                    HOME
+                  </HashLink>
                 </li>
-              )}
-            </ul>
-          </Col>
+                <li>
+                  <HashLink
+                    smooth
+                    to="/#community"
+                    className="hover:text-[#ff8c00] transition"
+                  >
+                    COMMUNITY
+                  </HashLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/contact"
+                    className="hover:text-[#ff8c00] transition"
+                  >
+                    CONTACT
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/officedetails"
+                    className="hover:text-[#ff8c00] transition"
+                  >
+                    SPACES
+                  </NavLink>
+                </li>
 
-          {/* Language & Hamburger */}
-          <Col xs={12} lg={6}>
-            <div className="flex justify-end items-center space-x-4">
-              <div className="hidden lg:block">
-                <button className="bg-white px-2 py-1 rounded text-lg">
+                {!isLoggedIn && (
+                  <>
+                    <li>
+                      <NavLink
+                        to="/login"
+                        className="hover:text-[#ff8c00] transition"
+                      >
+                        LOGIN
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to="/register"
+                        className="hover:text-[#ff8c00] transition"
+                      >
+                        REGISTER
+                      </NavLink>
+                    </li>
+                  </>
+                )}
+
+                {isLoggedIn && (
+                  <li>
+                    <button
+                      className="hover:text-[#ff8c00] transition"
+                      onClick={handleLogout}
+                    >
+                      LOGOUT
+                    </button>
+                  </li>
+                )}
+              </ul>
+            </Col>
+
+            {/* Language + Burger */}
+            <Col xs={12} lg={6}>
+              <div className="flex justify-end items-center space-x-4">
+                <button className="hidden lg:block bg-[#ff8c00] text-white px-3 py-1 rounded-full text-sm shadow-md">
                   EN / MK
                 </button>
-              </div>
-              <div className="lg:hidden">
-                <button onClick={toggleMenu}>
-                  {menuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+                <button className="lg:hidden text-black" onClick={toggleMenu}>
+                  {menuOpen ? <FiX size={28} /> : <FiMenu size={28} />}
                 </button>
               </div>
-            </div>
-          </Col>
-        </Row>
-      </div>
+            </Col>
+          </Row>
+        </div>
+      </nav>
 
       {/* Mobile Menu */}
       <div
-        className={`md:hidden z-50 fixed top-0 left-0 w-full h-full bg-white transform transition-transform duration-300 ease-in-out ${
+        className={`lg:hidden fixed top-0 left-0 w-full h-full bg-white z-999 transform transition-transform duration-300 ease-in-out ${
           menuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex justify-between items-center p-4">
+        <div className="flex justify-between items-center p-4 border-b">
           <NavLink to="/" onClick={toggleMenu}>
             <img className="w-20" src="/Images/Logo2.png" alt="Mobile Logo" />
           </NavLink>
@@ -121,9 +144,9 @@ const NavBar = ({ isLoggedIn, setIsLoggedIn }) => {
             </NavLink>
           </li>
           <li>
-            <a href="#community" onClick={toggleMenu}>
+            <HashLink smooth to="/#community" onClick={toggleMenu}>
               COMMUNITY
-            </a>
+            </HashLink>
           </li>
           <li>
             <NavLink to="/contact" onClick={toggleMenu}>
@@ -166,15 +189,15 @@ const NavBar = ({ isLoggedIn, setIsLoggedIn }) => {
 
           <li>
             <button
-              className="px-4 py-2 rounded"
-              onClick={() => alert("Switch Language")}
+              className="px-4 py-2 rounded bg-[#ff8c00] text-white"
+              onClick={toggleMenu}
             >
               EN / MK
             </button>
           </li>
         </ul>
       </div>
-    </nav>
+    </>
   );
 };
 

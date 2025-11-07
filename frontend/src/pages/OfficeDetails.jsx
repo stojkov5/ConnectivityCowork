@@ -9,7 +9,7 @@ const OfficeDetails = () => {
       gutter={[16, 16]}
       justify="center"
       align="middle"
-      className="office-details-container mx-auto"
+      className="office-details-container mx-auto py-20"
     >
       <Col span={24} className="office-header">
         <h2 className="office-title my-3">OFFICE DETAILS</h2>

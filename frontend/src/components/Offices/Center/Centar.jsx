@@ -251,7 +251,7 @@ const Center = ({ isLoggedInProp = null }) => {
   );
 
   return (
-    <Row justify="center">
+    <Row justify="center" className="py-20">
       <Col span={20}>
         <div style={{ margin: "3rem auto" }}>
           <h2 className="text-center text-3xl raleway-600 mb-6">CENTER</h2>

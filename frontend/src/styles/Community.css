@@ -1,0 +1,63 @@
+/* --- General Layout --- */
+.community-section {
+  background-color: #f9fafb;
+  
+}
+
+.community-card {
+  position: relative;
+ 
+  border-radius: 1rem;
+  padding: 2.5rem;
+  text-align: center;
+  overflow: hidden;
+  
+}
+
+/* --- Typography --- */
+.community-title {
+  color: #f97316; /* same orange accent as the Intro */
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+}
+
+.community-paragraph {
+  font-size: clamp(1rem, 1.2vw, 1.125rem);
+  color: #444;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+  
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.highlight {
+  color: #f97316;
+  font-weight: 600;
+}
+
+/* --- Images --- */
+.community-images img {
+  border-radius: 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.community-images img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+  .community-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .community-title {
+    font-size: 2rem;
+  }
+
+  .community-paragraph {
+    text-align: center;
+  }
+}

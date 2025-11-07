@@ -1,27 +1,52 @@
+/* eslint-disable no-unused-vars */
 import React from "react";
 import { Row, Col, Image } from "antd";
+import { motion } from "framer-motion";
+import "../../styles/Coffee.css";
 
 const Coffee = () => {
   return (
-    <section className="bg-gray-100 py-5">
+    <section id="coffee" className="coffee-section py-5 raleway-300">
       <Row
         justify="center"
         align="middle"
-        className="container mx-auto text-center raleway-300"
+        className="container mx-auto text-center"
       >
-        {/* Text Section */}
-        <Col xs={24} md={22} className=" rounded-2xl shadow-2xl p-5">
-          <h2 className="text-3xl raleway-600 mb-6">
-            WE MAKE SHURE YOU NEVER RUN OUT OF FUEL
-          </h2>
-          <p className="intro-paragraph mb-6">
-            We understand that the daily grind can be tough, and sometimes all
-            you need is a delicious cup of coffee to keep you going. You can
-            craft your perfect brew, whether you prefer a bold espresso shot or
-            a creamy latte. We take pride in ensuring that your caffeine fix is
-            always within reach.
-          </p>
-          <Image src="/Images/Coffee.webp" className="rounded-2xl" />
+        <Col xs={24} md={22}>
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="coffee-card  "
+          >
+            <h2 className="coffee-title text-4xl md:text-5xl font-semibold mb-6 tracking-wide">
+              WE MAKE SURE YOU NEVER RUN OUT OF FUEL
+            </h2>
+            <Row justify={"center"} gutter={[32, 32]} align={"middle"}>
+              {" "}
+              {/* Add align="middle" */}
+              <Col md={12} className="w-full h-full">
+                <p className="coffee-paragraph py-auto">
+                  We understand that the daily grind can be tough, and sometimes
+                  all you need is a delicious cup of coffee to keep you going.
+                  You can craft your perfect brew, whether you prefer a bold
+                  espresso shot or a creamy latte. We take pride in ensuring
+                  that your caffeine fix is always within reach.
+                </p>
+              </Col>
+              <Col md={12}>
+                <div className="coffee-image-wrapper">
+                  <img
+                    src="/Images/Coffee.webp"
+                    alt="Coffee station"
+                    className="coffee-image rounded-2xl"
+                    loading="lazy" 
+                    decoding="async" 
+                  />
+                </div>
+              </Col>
+            </Row>
+          </motion.div>
         </Col>
       </Row>
     </section>

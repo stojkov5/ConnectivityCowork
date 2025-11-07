@@ -9,21 +9,16 @@ import Coffee from "../components/LandingPage/Coffee";
 const Landing = () => {
   return (
     <>
-      <div>
-        <LandingJumbo />
-      </div>
-      <div>
-        <SocialProof />
-      </div>
-      <div>
-        <Intro />
-      </div>
+      <LandingJumbo />
+
+      <Intro />
+
       {/* <div className="py-12 bg-gray-100">
         <PhotoSlider />
       </div> */}
-      <div className="py-12 bg-gray-100">
-        <Community />
-      </div>
+
+      <Community />
+
       <div>
         <Coffee />
       </div>

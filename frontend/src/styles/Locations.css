@@ -1,15 +1,103 @@
+/* --- Section Background --- */
 .location-section {
+  position: relative;
   background-image: url("/Images/Location/Location.png");
   background-size: cover;
-  background-attachment: fixed; /* This makes it scroll with content */
+  background-position: center;
+  background-attachment: fixed;
+  overflow: hidden;
+  text-align: center;
 }
 
-.location-image {
+/* --- Title & Subtitle --- */
+.location-title {
+  color: #f97316;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.location-subtitle {
+  background: rgba(249, 115, 22, 0.85);
+  color: #fff;
+  border-radius: 1rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  backdrop-filter: blur(6px);
+}
+
+/* --- Column Fix: center content properly --- */
+.location-col {
   display: flex;
   justify-content: center;
   align-items: center;
 }
-.location-text {
-  color: white;
-  background-color: #f15a24;
+
+/* --- Location Card --- */
+.location-card {
+  position: relative;
+  max-width: 450px;
+  width: 100%;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.location-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Image --- */
+.location-img {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  border-radius: 1rem;
+  transition: transform 0.4s ease;
+}
+
+.location-card:hover .location-img {
+  transform: scale(1.05);
+}
+
+/* --- Orange Label --- */
+.location-label {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #f97316;
+  color: #fff;
+  padding: 0.5rem 1.25rem;
+  border-radius: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.location-card:hover .location-label {
+  background: #ea580c;
+  transform: translateX(-50%) scale(1.05);
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .location-img {
+    height: 220px;
+  }
+
+  .location-label {
+    font-size: 0.95rem;
+    padding: 0.4rem 1rem;
+  }
+
+  .location-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .location-title {
+    font-size: 2rem;
+  }
 }

@@ -1,0 +1,65 @@
+/* --- Card Styling --- */
+.coffee-card {
+  position: relative;
+ 
+  border-radius: 1rem;
+  padding: 2.5rem;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* --- Title --- */
+.coffee-title {
+  color: #f97316; /* orange highlight for visual consistency */
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+}
+
+/* --- Text --- */
+.coffee-paragraph {
+  font-size: clamp(1rem, 1.2vw, 1.125rem);
+  color: #444;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* --- Image --- */
+.coffee-image-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.coffee-image {
+  width: 100%;
+  max-width: 700px;
+  border-radius: 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.coffee-image:hover {
+  transform: scale(1.03);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+  .coffee-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .coffee-title {
+    font-size: 2rem;
+  }
+
+  .coffee-paragraph {
+    text-align: center;
+  }
+
+  .coffee-image {
+    max-width: 100%;
+  }
+}

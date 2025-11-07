@@ -1,56 +1,81 @@
+/* eslint-disable no-unused-vars */
 import { Row, Col } from "antd";
-import "../../styles/Locations.css";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import "../../styles/Locations.css";
+
 const Locations = () => {
   return (
-    <div className="py-5 location-section relative mx-auto">
-      <div className="absolute inset-0 bg-black opacity-50 z-0"></div>
-      <Row
-        gutter={[16, 16]}
-        justify="center"
-        align="middle"
-        className="text-center"
-      >
-        <Col span={24} className="text-white raleway-600">
-          <h2 className="text-3xl raleway-600 mb-6">LOCATIONS</h2>
-          <p className="raleway-300 text-2xl location-text inline-block px-3 py-2 rounded-2xl">
-            Two locations, tailored for any professional's needs
-          </p>
-        </Col>
-        <Col md={12} className="text-white z-10 w-full location-image">
-          <Link to="/officedetails" className="relative inline-block w-96 h-60">
-            <img
-              className="w-full h-full rounded-2xl object-cover"
-              src="/Images/Location/KiselaVoda.webp"
-              alt="Kisela Voda"
-            />
-            <p
-              className="absolute inset-0 flex items-center justify-center 
-               text-2xl font-semibold location-text
-               rounded-2xl px-4 py-2 w-fit h-fit m-auto z-10"
+    <section id="locations" className="location-section relative py-5">
+      {/* soft dark overlay */}
+      <div className="absolute inset-0 bg-black/40 z-0 backdrop-blur-sm"></div>
+
+      <div className="relative z-10 container mx-auto text-center">
+        <motion.h2
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="location-title text-4xl md:text-5xl font-semibold mb-4 tracking-wide text-orange-500"
+        >
+          LOCATIONS
+        </motion.h2>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, ease: "easeOut" }}
+          className="location-subtitle text-xl md:text-2xl text-white/90 mb-12 inline-block px-6 py-3 rounded-2xl backdrop-blur-md bg-orange-500/85 font-medium"
+        >
+          Two locations, tailored for any professional’s needs
+        </motion.p>
+
+        {/* Centered Row of Cards */}
+        <Row gutter={[32, 32]} justify="center" align="middle">
+          {/* Kisela Voda */}
+          <Col xs={24} md={10} className="location-col">
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
+              className="location-card"
             >
-              KISELA VODA
-            </p>
-          </Link>
-        </Col>
-        <Col md={12} className="text-white  z-10 w-full location-image">
-          <Link to="/officedetails" className="relative inline-block w-96 h-60">
-            <img
-              className="w-full h-full rounded-2xl object-cover"
-              src="/Images/Location/Centar.webp"
-              alt="CENTAR "
-            />
-            <p
-              className="absolute inset-0 flex items-center justify-center 
-               text-2xl font-semibold location-text
-               rounded-2xl px-4 py-2 w-fit h-fit m-auto z-10"
+              <Link to="/officedetails" className="location-link">
+                <img
+                  src="/Images/Location/KiselaVoda.webp"
+                  alt="Kisela Voda"
+                  className="location-img"
+                />
+                <div className="location-label">
+                  <span>KISELA VODA</span>
+                </div>
+              </Link>
+            </motion.div>
+          </Col>
+
+          {/* Centar */}
+          <Col xs={24} md={10} className="location-col">
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut", delay: 0.3 }}
+              className="location-card"
             >
-              CENTAR
-            </p>
-          </Link>
-        </Col>
-      </Row>
-    </div>
+              <Link to="/officedetails" className="location-link">
+                <img
+                  src="/Images/Location/Centar.webp"
+                  alt="Centar"
+                  className="location-img"
+                />
+                <div className="location-label">
+                  <span>CENTAR</span>
+                </div>
+              </Link>
+            </motion.div>
+          </Col>
+        </Row>
+      </div>
+    </section>
   );
 };
+
 export default Locations;
