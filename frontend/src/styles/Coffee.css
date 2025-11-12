@@ -1,9 +1,13 @@
 /* --- Card Styling --- */
+.coffee-section {
+background-color: white;
+}
+
 .coffee-card {
   position: relative;
- 
+
   border-radius: 1rem;
-  padding: 2.5rem;
+  
   text-align: center;
   overflow: hidden;
 }

@@ -15,7 +15,7 @@ const Locations = () => {
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="location-title text-4xl md:text-5xl font-semibold mb-4 tracking-wide text-orange-500"
+          className="location-title text-4xl md:text-5xl font-semibold mb-4 tracking-wide raleway-600 "
         >
           LOCATIONS
         </motion.h2>

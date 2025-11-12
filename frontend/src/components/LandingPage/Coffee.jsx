@@ -19,7 +19,7 @@ const Coffee = () => {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="coffee-card  "
           >
-            <h2 className="coffee-title text-4xl md:text-5xl font-semibold mb-6 tracking-wide">
+            <h2 className="coffee-title text-4xl md:text-5xl font-semibold mb-6 tracking-wide raleway-600">
               WE MAKE SURE YOU NEVER RUN OUT OF FUEL
             </h2>
             <Row justify={"center"} gutter={[32, 32]} align={"middle"}>

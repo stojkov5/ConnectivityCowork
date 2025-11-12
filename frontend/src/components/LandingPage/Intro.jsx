@@ -16,7 +16,7 @@ const Intro = () => {
           >
           
 
-            <h1 className="text-4xl md:text-5xl raleway-600 text-orange-500 mb-6 tracking-wide">
+            <h1 className="intro-title text-4xl md:text-5xl raleway-600 mb-6 tracking-wide">
               WELCOME
             </h1>
 

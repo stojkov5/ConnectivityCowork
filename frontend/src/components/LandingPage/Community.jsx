@@ -5,7 +5,7 @@ import "../../styles/Community.css";
 
 const Community = () => {
   return (
-    <section id="community" className="community-section py-5 raleway-300">
+    <section id="community" className="py-5 raleway-300">
       <Row
         justify="center"
         align="middle"
@@ -18,7 +18,7 @@ const Community = () => {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="community-card "
           >
-            <h2 className="community-title text-4xl md:text-5xl font-semibold mb-6 tracking-wide">
+            <h2 className="community-title raleway-600 text-4xl md:text-5xl font-semibold mb-6 tracking-wide">
               OUR COMMUNITY
             </h2>
 

@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import BookingOverview from "./BookingOverview";
 import FloorPlan from "./FloorPlan";
 import ReservationModal from "./ReservationModal";
-import PhotoSlider from "../../PhotoSlider";
+
 // import TypeOfBooking from "./TypeOfBooking";
 // ===== Constants =====
 const initialRooms = [

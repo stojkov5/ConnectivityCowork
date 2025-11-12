@@ -1,14 +1,11 @@
 /* --- General Layout --- */
-.community-section {
-  background-color: #f9fafb;
-  
-}
+
 
 .community-card {
   position: relative;
  
   border-radius: 1rem;
-  padding: 2.5rem;
+ 
   text-align: center;
   overflow: hidden;
   
