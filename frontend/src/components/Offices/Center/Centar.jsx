@@ -1,16 +1,16 @@
-// Center.jsx
 import React, { useState, useMemo, useCallback } from "react";
 import { Row, Col, DatePicker, Alert, Tag, message } from "antd";
 import dayjs from "dayjs";
 import BookingOverview from "./BookingOverview";
 import FloorPlan from "./FloorPlan";
 import ReservationModal from "./ReservationModal";
+import "../../../styles/Centar.css";
 
-// === offices data (kept from your file) ===
+// === offices data ===
 const offices = [
   {
     id: "centar",
-    name: "Centar-First Floor",
+    name: "Centar - First Floor",
     image: "/Centar.svg",
     viewBox: "0 0 893 588",
     seats: [
@@ -39,7 +39,7 @@ const offices = [
   },
   {
     id: "centar2",
-    name: "Centar-Gallery",
+    name: "Centar - Gallery",
     image: "/Centar2.svg",
     viewBox: "0 0 860 564",
     seats: [
@@ -74,10 +74,7 @@ const normalizeDate = (d) => dayjs(d).format("YYYY-MM-DD");
 const computeRange = (type, selectedDate) => {
   if (!selectedDate) return null;
   const d = dayjs(selectedDate);
-  if (type === "daily") {
-    const s = d.startOf("day");
-    return { start: normalizeDate(s), end: normalizeDate(s) };
-  }
+  if (type === "daily") return { start: normalizeDate(d), end: normalizeDate(d) };
   if (type === "weekly") {
     const s = d.startOf("day");
     const e = s.add(6, "day");
@@ -91,41 +88,33 @@ const computeRange = (type, selectedDate) => {
   return null;
 };
 
-const rangesOverlap = (aStart, aEnd, bStart, bEnd) => {
-  return !(dayjs(aEnd).isBefore(dayjs(bStart)) || dayjs(aStart).isAfter(dayjs(bEnd)));
-};
+const rangesOverlap = (aStart, aEnd, bStart, bEnd) =>
+  !(dayjs(aEnd).isBefore(dayjs(bStart)) || dayjs(aStart).isAfter(dayjs(bEnd)));
 
-// === localStorage hook ===
 function useReservations(key = "centerReservations") {
   const getAll = () => JSON.parse(localStorage.getItem(key) || "[]");
   const reservations = getAll();
-  const saveReservations = (arr) => {
+
+  const save = (arr) => {
     localStorage.setItem(key, JSON.stringify(arr));
     return arr;
   };
 
-  const addReservation = (newRes) => {
-    const latest = getAll();
-    const merged = [...latest, newRes];
-    saveReservations(merged);
-    return merged;
-  };
+  const addReservation = (res) => save([...getAll(), res]);
 
-  const deleteReservation = (resToDelete) => {
-    const latest = getAll();
-    const filtered = latest.filter(
-      (r) =>
-        !(
-          r.officeId === resToDelete.officeId &&
-          r.seatId === resToDelete.seatId &&
-          r.startDate === resToDelete.startDate &&
-          r.endDate === resToDelete.endDate &&
-          r.type === resToDelete.type
-        )
+  const deleteReservation = (res) =>
+    save(
+      getAll().filter(
+        (r) =>
+          !(
+            r.officeId === res.officeId &&
+            r.seatId === res.seatId &&
+            r.startDate === res.startDate &&
+            r.endDate === res.endDate &&
+            r.type === res.type
+          )
+      )
     );
-    saveReservations(filtered);
-    return filtered;
-  };
 
   return { reservations, addReservation, deleteReservation };
 }
@@ -134,22 +123,30 @@ const statusColors = { free: "#00ff00", taken: "#ff0000" };
 
 const Center = ({ isLoggedInProp = null }) => {
   const { reservations, addReservation, deleteReservation } = useReservations();
-
   const isAuthenticated =
-    typeof isLoggedInProp === "boolean" ? isLoggedInProp : !!localStorage.getItem("token");
+    typeof isLoggedInProp === "boolean"
+      ? isLoggedInProp
+      : !!localStorage.getItem("token");
 
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedSeat, setSelectedSeat] = useState(null); // seat object including selectedDate passed in
+  const [selectedSeat, setSelectedSeat] = useState(null);
   const [selectedType, setSelectedType] = useState("daily");
   const [showOverview, setShowOverview] = useState(false);
   const [activeOfficeId, setActiveOfficeId] = useState("centar");
 
-  const activeOffice = useMemo(() => offices.find((o) => o.id === activeOfficeId), [activeOfficeId]);
+  const activeOffice = useMemo(
+    () => offices.find((o) => o.id === activeOfficeId),
+    [activeOfficeId]
+  );
 
   const seatsWithStatus = useMemo(() => {
     if (!activeOffice) return [];
     if (!selectedDate)
-      return activeOffice.seats.map((s) => ({ ...s, status: "free", bookedRanges: [] }));
+      return activeOffice.seats.map((s) => ({
+        ...s,
+        status: "free",
+        bookedRanges: [],
+      }));
     const formatted = selectedDate.format("YYYY-MM-DD");
     return activeOffice.seats.map((seat) => {
       const booked = reservations.filter(
@@ -163,7 +160,11 @@ const Center = ({ isLoggedInProp = null }) => {
         status: booked.length > 0 ? "taken" : "free",
         bookedRanges: reservations
           .filter((r) => r.seatId === seat.id && r.officeId === activeOffice.id)
-          .map((r) => ({ start: r.startDate, end: r.endDate, type: r.type })),
+          .map((r) => ({
+            start: r.startDate,
+            end: r.endDate,
+            type: r.type,
+          })),
       };
     });
   }, [activeOffice, selectedDate, reservations]);
@@ -172,39 +173,34 @@ const Center = ({ isLoggedInProp = null }) => {
     (seatId, range, officeId) => {
       if (!range) return [];
       return reservations.filter(
-        (r) => r.seatId === seatId && r.officeId === officeId && rangesOverlap(r.startDate, r.endDate, range.start, range.end)
+        (r) =>
+          r.seatId === seatId &&
+          r.officeId === officeId &&
+          rangesOverlap(r.startDate, r.endDate, range.start, range.end)
       );
     },
     [reservations]
   );
 
   const handleSeatClick = (seat) => {
-    if (!selectedDate) {
-      message.error("Select a date first");
-      return;
-    }
-    // pass selectedDate into seat object so modal can compute accurate range
+    if (!selectedDate) return message.error("Select a date first");
     setSelectedSeat({ ...seat, selectedDate });
     setSelectedType("daily");
   };
 
   const handleReserve = (seat, type) => {
-    if (!isAuthenticated) {
-      message.error("You must be logged in to reserve.");
-      return;
-    }
+    if (!isAuthenticated) return message.error("You must be logged in to reserve.");
     if (!seat || !selectedDate || !type) return;
-
     const range = computeRange(type, selectedDate);
-    if (!range) return;
+    const conflicts = getConflictingReservationsForRange(
+      seat.id,
+      range,
+      activeOffice.id
+    );
+    if (conflicts.length > 0)
+      return message.error("Seat is already booked for that range.");
 
-    const conflicts = getConflictingReservationsForRange(seat.id, range, activeOffice.id);
-    if (conflicts.length > 0) {
-      message.error("This seat is already booked for (part of) that range.");
-      return;
-    }
-
-    const newRes = {
+    addReservation({
       officeId: activeOffice.id,
       officeName: activeOffice.name,
       seatId: seat.id,
@@ -213,141 +209,167 @@ const Center = ({ isLoggedInProp = null }) => {
       startDate: range.start,
       endDate: range.end,
       createdAt: new Date().toISOString(),
-    };
-
-    addReservation(newRes);
+    });
     message.success("Reservation created.");
     setSelectedSeat(null);
     setSelectedType("daily");
   };
 
-  const handleDelete = (res) => {
-    deleteReservation(res);
+  const handleDelete = (r) => {
+    deleteReservation(r);
     message.success("Reservation deleted.");
   };
 
   const dateRender = useCallback(
     (current) => {
       const formatted = current.format("YYYY-MM-DD");
-      const reservationsForDate = reservations.filter((r) => r.officeId === activeOffice.id && rangesOverlap(r.startDate, r.endDate, formatted, formatted));
-      const bookedSeats = new Set(reservationsForDate.map((r) => r.seatId));
-      const totalSeats = activeOffice.seats.length;
-      const base = {
-        borderRadius: "50%",
-        width: 24,
-        height: 24,
-        textAlign: "center",
-        margin: "auto",
-        lineHeight: "22px",
-      };
+      const reservationsForDate = reservations.filter(
+        (r) =>
+          r.officeId === activeOffice.id &&
+          rangesOverlap(r.startDate, r.endDate, formatted, formatted)
+      );
+      const booked = new Set(reservationsForDate.map((r) => r.seatId));
+      const total = activeOffice.seats.length;
 
-      if (bookedSeats.size === totalSeats)
-        return <div style={{ ...base, background: "#ff4d4f", color: "#fff" }}>{current.date()}</div>;
-      if (bookedSeats.size > 0)
-        return <div style={{ ...base, border: "1px solid #faad14", color: "#faad14" }}>{current.date()}</div>;
-      return <div style={base}>{current.date()}</div>;
+      if (booked.size === total)
+        return (
+          <div className="calendar-dot bg-red-500 text-white">
+            {current.date()}
+          </div>
+        );
+      if (booked.size > 0)
+        return (
+          <div className="calendar-dot border border-orange-400 text-orange-500 font-semibold">
+            {current.date()}
+          </div>
+        );
+      return <div className="calendar-dot text-gray-700">{current.date()}</div>;
     },
     [reservations, activeOffice]
   );
 
   return (
-    <Row justify="center" className="py-20">
-      <Col span={20}>
-        <div style={{ margin: "3rem auto" }}>
-          <h2 className="text-center text-3xl raleway-600 mb-6">CENTER</h2>
+    <div className="bg-gray-50 min-h-screen py-16 fade-in">
+      <Row justify="center">
+        <Col span={20}>
+          <div className="bg-white rounded-xl shadow-lg p-10 border border-gray-100">
+            <h2 className="text-center text-3xl font-semibold text-orange-500 mb-10 tracking-wide">
+              CENTER BOOKINGS
+            </h2>
 
-          <Row gutter={[24, 24]}>
-            <Col xs={24} md={6}>
-              <div style={{ marginBottom: 20, display: "flex", flexWrap: "wrap", gap: 10 }}>
-                <DatePicker
-                  value={selectedDate}
-                  onChange={(d) => {
-                    setSelectedDate(d);
-                    setSelectedSeat(null);
-                    setSelectedType("daily");
-                  }}
-                  disabledDate={(current) => current && current < dayjs().startOf("day")}
-                  callRender={dateRender}
-                  style={{ width: 250 }}
-                  allowClear={false}
-                  placeholder="Select date"
-                />
+            <Row gutter={[24, 24]}>
+              {/* LEFT PANEL */}
+              <Col xs={24} md={6}>
+                <div className="bg-white rounded-xl shadow-md p-5 space-y-5 card-hover flex flex-col gap-5">
+                  <DatePicker
+                    value={selectedDate}
+                    onChange={(d) => {
+                      setSelectedDate(d);
+                      setSelectedSeat(null);
+                      setSelectedType("daily");
+                    }}
+                    disabledDate={(current) =>
+                      current && current < dayjs().startOf("day")
+                    }
+                    cellRender={dateRender}
+                    className="w-full"
+                    allowClear={false}
+                    placeholder="Select a date"
+                  />
 
-                <select
-                  value={activeOfficeId}
-                  onChange={(e) => setActiveOfficeId(e.target.value)}
-                  style={{ width: 200, padding: "6px 8px" }}
-                >
-                  {offices.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.name}
-                    </option>
-                  ))}
-                </select>
+                  <select
+                    value={activeOfficeId}
+                    onChange={(e) => setActiveOfficeId(e.target.value)}
+                    className="w-full border rounded-md py-2 px-3 text-gray-700 focus:ring-2 focus:ring-orange-500"
+                  >
+                    {offices.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.name}
+                      </option>
+                    ))}
+                  </select>
 
-                <button
-                  onClick={() => setShowOverview((p) => !p)}
-                  className="landing-btn text-white px-5 py-2 rounded-full raleway-300 transition duration-300"
-                >
-                  {showOverview ? "Hide Overview" : "Show Overview"}
-                </button>
-              </div>
+                  <button
+                    onClick={() => setShowOverview((p) => !p)}
+                    className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm"
+                  >
+                    {showOverview ? "Hide Overview" : "Show Overview"}
+                  </button>
 
-              {selectedDate && (
-                <Alert
-                  style={{ marginBottom: 20 }}
-                  message={
-                    <>
-                      {selectedDate.format("YYYY-MM-DD")}
-                      <Tag color="blue" style={{ marginLeft: 10 }}>
-                        {seatsWithStatus.filter((r) => r.status === "free").length} free
-                      </Tag>
-                      <Tag color="red" style={{ marginLeft: 5 }}>
-                        {seatsWithStatus.filter((r) => r.status === "taken").length} booked
-                      </Tag>
-                    </>
-                  }
-                  type="info"
-                  showIcon
-                />
-              )}
+                  {selectedDate && (
+                    <Alert
+                      className="rounded-md"
+                      message={
+                        <>
+                          {selectedDate.format("YYYY-MM-DD")}
+                          <Tag color="blue" className="ml-2">
+                            {
+                              seatsWithStatus.filter((r) => r.status === "free")
+                                .length
+                            }{" "}
+                            free
+                          </Tag>
+                          <Tag color="red" className="ml-2">
+                            {
+                              seatsWithStatus.filter((r) => r.status === "taken")
+                                .length
+                            }{" "}
+                            booked
+                          </Tag>
+                        </>
+                      }
+                      type="info"
+                      showIcon
+                    />
+                  )}
 
-              {showOverview && (
-                <BookingOverview
-                  reservations={reservations.filter((r) => r.officeId === activeOffice.id)}
-                  seats={activeOffice.seats}
-                  onDelete={handleDelete}
-                  showDelete={isAuthenticated}
-                />
-              )}
-            </Col>
+                  {showOverview && (
+                    <div className="max-h-[480px] overflow-y-auto border-t pt-3">
+                      <BookingOverview
+                        reservations={reservations.filter(
+                          (r) => r.officeId === activeOffice.id
+                        )}
+                        seats={activeOffice.seats}
+                        onDelete={handleDelete}
+                        showDelete={isAuthenticated}
+                      />
+                    </div>
+                  )}
+                </div>
+              </Col>
 
-            <Col xs={24} md={18}>
-              <FloorPlan
-                office={activeOffice}
-                seats={seatsWithStatus}
-                onSeatClick={(s) => handleSeatClick(s)}
-                statusColors={statusColors}
-              />
-            </Col>
-          </Row>
+              {/* RIGHT PANEL */}
+              <Col xs={24} md={18}>
+                <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+                  <FloorPlan
+                    office={activeOffice}
+                    seats={seatsWithStatus}
+                    onSeatClick={handleSeatClick}
+                    statusColors={statusColors}
+                  />
+                </div>
+              </Col>
+            </Row>
 
-          <ReservationModal
-            seat={selectedSeat}
-            selectedType={selectedType}
-            onTypeChange={setSelectedType}
-            onClose={() => {
-              setSelectedSeat(null);
-              setSelectedType("daily");
-            }}
-            onReserve={handleReserve}
-            computeRange={computeRange}
-            getConflictingReservationsForRange={(seatId, range) => getConflictingReservationsForRange(seatId, range, activeOffice.id)}
-            isAuthenticated={isAuthenticated}
-          />
-        </div>
-      </Col>
-    </Row>
+            <ReservationModal
+              seat={selectedSeat}
+              selectedType={selectedType}
+              onTypeChange={setSelectedType}
+              onClose={() => {
+                setSelectedSeat(null);
+                setSelectedType("daily");
+              }}
+              onReserve={handleReserve}
+              computeRange={computeRange}
+              getConflictingReservationsForRange={(seatId, range) =>
+                getConflictingReservationsForRange(seatId, range, activeOffice.id)
+              }
+              isAuthenticated={isAuthenticated}
+            />
+          </div>
+        </Col>
+      </Row>
+    </div>
   );
 };
 

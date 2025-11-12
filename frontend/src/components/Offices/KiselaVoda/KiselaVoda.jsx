@@ -1,13 +1,11 @@
-// KiselaVoda.jsx
 import React, { useState, useMemo, useCallback } from "react";
-import { Row, Col, DatePicker, Alert, Tag, message } from "antd";
+import { Row, Col, DatePicker, Alert, Tag, message, Card } from "antd";
 import dayjs from "dayjs";
 import BookingOverview from "./BookingOverview";
 import FloorPlan from "./FloorPlan";
 import ReservationModal from "./ReservationModal";
+import "../../../styles/KiselaVoda.css";
 
-// import TypeOfBooking from "./TypeOfBooking";
-// ===== Constants =====
 const initialRooms = [
   { id: "room-1", name: "Room 1" },
   { id: "room-2", name: "Room 2" },
@@ -19,20 +17,16 @@ const initialRooms = [
   { id: "room-8", name: "Room 8" },
 ];
 
-// ===== Helpers =====
 const normalizeDate = (d) => dayjs(d).format("YYYY-MM-DD");
 
-// return range inclusive { start, end } as YYYY-MM-DD strings
 const computeRange = (type, selectedDate) => {
   if (!selectedDate) return null;
   const d = dayjs(selectedDate);
-  if (type === "daily") {
-    const s = d.startOf("day");
-    return { start: normalizeDate(s), end: normalizeDate(s) };
-  }
+  if (type === "daily")
+    return { start: normalizeDate(d), end: normalizeDate(d) };
   if (type === "weekly") {
     const s = d.startOf("day");
-    const e = s.add(6, "day"); // 7-day window starting at selected date
+    const e = s.add(6, "day");
     return { start: normalizeDate(s), end: normalizeDate(e) };
   }
   if (type === "monthly") {
@@ -43,17 +37,14 @@ const computeRange = (type, selectedDate) => {
   return null;
 };
 
-// check overlap between two inclusive ranges a/b (strings YYYY-MM-DD)
 const rangesOverlap = (aStart, aEnd, bStart, bEnd) => {
   return !(
     dayjs(aEnd).isBefore(dayjs(bStart)) || dayjs(aStart).isAfter(dayjs(bEnd))
   );
 };
 
-// ===== Custom Hook (simple localStorage-based) =====
 function useReservations() {
   const getAll = () => JSON.parse(localStorage.getItem("reservations") || "[]");
-
   const reservations = getAll();
 
   const saveReservations = (newArr) => {
@@ -67,15 +58,11 @@ function useReservations() {
     saveReservations(merged);
     return merged;
   };
-
   return { reservations, addReservation };
 }
 
-// ===== Main Component =====
 const KiselaVoda = ({ isLoggedInProp = null }) => {
   const { reservations, addReservation } = useReservations();
-
-  // default auth: check localStorage token (you can pass isLoggedInProp from your auth context)
   const isAuthenticated =
     typeof isLoggedInProp === "boolean"
       ? isLoggedInProp
@@ -86,7 +73,6 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
   const [selectedType, setSelectedType] = useState("daily");
   const [showOverview, setShowOverview] = useState(false);
 
-  // --- Compute rooms from reservations & selectedDate (determine if room is free/taken on that date) ---
   const rooms = useMemo(() => {
     if (!selectedDate)
       return initialRooms.map((r) => ({
@@ -101,7 +87,6 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
           r.roomId === room.id &&
           rangesOverlap(r.startDate, r.endDate, formatted, formatted)
       );
-      // If any reservation overlaps the selected date -> taken
       return {
         ...room,
         status: booked.length > 0 ? "taken" : "free",
@@ -130,11 +115,9 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
       return;
     }
     if (!selectedRoom || !selectedDate || !selectedType) return;
-
     const range = computeRange(selectedType, selectedDate);
     if (!range) return;
 
-    // check overlap
     const conflicts = getConflictingReservationsForRange(
       selectedRoom.id,
       range
@@ -144,7 +127,6 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
       return;
     }
 
-    // create reservation record
     const newRes = {
       roomId: selectedRoom.id,
       roomName: selectedRoom.name,
@@ -152,12 +134,10 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
       startDate: range.start,
       endDate: range.end,
       createdAt: new Date().toISOString(),
-      // Optional: userId: ... (if available from auth)
     };
 
     addReservation(newRes);
     message.success("Reservation created.");
-    // reset modal selection
     setSelectedRoom(null);
     setSelectedType("daily");
   }, [
@@ -185,132 +165,122 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
           rangesOverlap(r.startDate, r.endDate, formatted, formatted)
         );
 
-      const base = {
-        borderRadius: "50%",
-        width: 24,
-        height: 24,
-        textAlign: "center",
-        margin: "auto",
-        lineHeight: "22px",
-      };
-
       if (allTaken)
         return (
-          <div style={{ ...base, background: "#ff4d4f", color: "#fff" }}>
+          <div className="calendar-dot bg-red-500 text-white">
             {current.date()}
           </div>
         );
       if (partiallyTaken)
         return (
-          <div
-            style={{ ...base, border: "1px solid #faad14", color: "#faad14" }}
-          >
+          <div className="calendar-dot border border-orange-400 text-orange-500 font-semibold">
             {current.date()}
           </div>
         );
-      return <div style={base}>{current.date()}</div>;
+      return <div className="calendar-dot text-gray-700">{current.date()}</div>;
     },
     [reservations]
   );
 
   return (
-    <Row justify="center" className="py-20">
-      <Col span={20}>
-        <div className="kiselavoda-wrapper" style={{ margin: "3rem auto" }}>
-          <h2 className="text-center text-3xl raleway-600 mb-6">KISELA VODA</h2>
-          <PhotoSlider />
-          {/* <TypeOfBooking/> */}
-          <Row gutter={[16, 16]} className="my-5">
-            {/* LEFT SIDE */}
-            <Col xs={24} md={6}>
-              <div
-                style={{
-                  marginBottom: 20,
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 10,
-                }}
-              >
-                <DatePicker
-                  value={selectedDate}
-                  onChange={(d) => {
-                    setSelectedDate(d);
-                    setSelectedRoom(null);
-                    setSelectedType("daily");
-                  }}
-                  disabledDate={(current) =>
-                    current && current < dayjs().startOf("day")
-                  }
-                  cellRender={dateRender}
-                  style={{ width: 250 }}
-                  allowClear={false}
-                  placeholder="Select date"
-                />
-                <button
-                  onClick={() => setShowOverview((prev) => !prev)}
-                  className="landing-btn text-white px-5 py-2 rounded-full raleway-300 transition duration-300"
-                >
-                  {showOverview ? "Hide Overview" : "Show Overview"}
-                </button>
-              </div>
+    <div className="bg-gray-50 min-h-screen py-16 fade-in">
+      <Row justify="center">
+        <Col span={20}>
+          <div className="bg-white shadow-lg rounded-xl p-10 border border-gray-100">
+            <h2 className="text-center text-3xl font-semibold text-orange-500 tracking-wide mb-10">
+              KISELA VODA BOOKINGS
+            </h2>
 
-              {selectedDate && (
-                <Alert
-                  style={{ marginBottom: 20 }}
-                  message={
-                    <>
-                      {selectedDate.format("YYYY-MM-DD")}
-                      <Tag color="blue" style={{ marginLeft: 10 }}>
-                        {rooms.filter((r) => r.status === "free").length} free
-                      </Tag>
-                      <Tag color="red" style={{ marginLeft: 5 }}>
-                        {rooms.filter((r) => r.status === "taken").length}{" "}
-                        booked
-                      </Tag>
-                    </>
-                  }
-                  type="info"
-                  showIcon
-                />
-              )}
+            <Row gutter={[24, 24]}>
+              {/* LEFT PANEL */}
+              <Col xs={24} md={6}>
+                <div className="bg-white rounded-xl shadow-md p-5 space-y-5 card-hover flex flex-col  gap-5">
+                  <DatePicker
+                    value={selectedDate}
+                    onChange={(d) => {
+                      setSelectedDate(d);
+                      setSelectedRoom(null);
+                      setSelectedType("daily");
+                    }}
+                    disabledDate={(current) =>
+                      current && current < dayjs().startOf("day")
+                    }
+                    cellRender={dateRender}
+                    className="w-full"
+                    allowClear={false}
+                    placeholder="Select a date"
+                  />
 
-              {showOverview && (
-                <BookingOverview
-                  reservations={reservations}
-                  rooms={initialRooms}
-                />
-              )}
-            </Col>
+                  <button
+                    onClick={() => setShowOverview((prev) => !prev)}
+                    className="w-full bg-orange-500 text-white rounded-md py-2 font-medium hover:bg-orange-600 transition duration-300 "
+                  >
+                    {showOverview ? "Hide Overview" : "Show Overview"}
+                  </button>
 
-            {/* RIGHT SIDE / SVG */}
-            <Col xs={24} md={18}>
-              <FloorPlan
-                rooms={rooms}
-                selectedDate={selectedDate}
-                onRoomClick={setSelectedRoom}
-              />
-            </Col>
-          </Row>
+                  {selectedDate && (
+                    <Alert
+                      className="rounded-md p-0"
+                      message={
+                        <>
+                          {selectedDate.format("YYYY-MM-DD")}
+                          <Tag color="blue" className="ml-2">
+                            {rooms.filter((r) => r.status === "free").length}{" "}
+                            free
+                          </Tag>
+                          <Tag color="red" className="ml-2">
+                            {rooms.filter((r) => r.status === "taken").length}{" "}
+                            booked
+                          </Tag>
+                        </>
+                      }
+                      type="info"
+                      showIcon
+                    />
+                  )}
 
-          {/* MODAL */}
-          <ReservationModal
-            room={selectedRoom}
-            selectedType={selectedType}
-            onTypeChange={setSelectedType}
-            onClose={() => {
-              setSelectedRoom(null);
-              setSelectedType("daily");
-            }}
-            onReserve={handleReserve}
-            computeRange={computeRange}
-            getConflictingReservationsForRange={
-              getConflictingReservationsForRange
-            }
-            isAuthenticated={isAuthenticated}
-          />
-        </div>
-      </Col>
-    </Row>
+                  {showOverview && (
+                    <div className="max-h-[480px] overflow-y-auto border-t ">
+                      <BookingOverview
+                        reservations={reservations}
+                        rooms={initialRooms}
+                      />
+                    </div>
+                  )}
+                </div>
+              </Col>
+
+              {/* RIGHT PANEL */}
+              <Col xs={24} md={18}>
+                <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+                  <FloorPlan
+                    rooms={rooms}
+                    selectedDate={selectedDate}
+                    onRoomClick={setSelectedRoom}
+                  />
+                </div>
+              </Col>
+            </Row>
+
+            <ReservationModal
+              room={selectedRoom}
+              selectedType={selectedType}
+              onTypeChange={setSelectedType}
+              onClose={() => {
+                setSelectedRoom(null);
+                setSelectedType("daily");
+              }}
+              onReserve={handleReserve}
+              computeRange={computeRange}
+              getConflictingReservationsForRange={
+                getConflictingReservationsForRange
+              }
+              isAuthenticated={isAuthenticated}
+            />
+          </div>
+        </Col>
+      </Row>
+    </div>
   );
 };
 
