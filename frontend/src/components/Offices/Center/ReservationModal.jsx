@@ -1,55 +1,36 @@
-/* eslint-disable no-unused-vars */
-// ReservationModal.jsx
-import React, { useMemo } from "react";
-import { Modal, Select, Tag, Alert, Space, Typography, Input } from "antd";
-import dayjs from "dayjs";
+import React from "react";
+import { Modal, Tag, Typography, Input, Alert, List } from "antd";
 
 const { Text } = Typography;
 
 const ReservationModal = ({
-  seat,
-  selectedType,
-  onTypeChange,
+  open,
   onClose,
-  onReserve,
-  computeRange,
-  getConflictingReservationsForRange,
-  isAuthenticated,
+  range,
+  plan,
+  selectedSeats = [],
   userEmail,
   companyName,
   onCompanyNameChange,
+  hasConflicts,
+  conflictDetails = [],
+  onConfirm,
+  isAuthenticated,
 }) => {
-  const displayRange = seat?.selectedDate
-    ? computeRange(selectedType, seat.selectedDate)
-    : null;
-
-  const conflicts =
-    seat && displayRange
-      ? getConflictingReservationsForRange(seat.id, displayRange)
-      : [];
-
-  const hasConflict = conflicts.length > 0;
-
   const disabled =
-    !seat ||
-    !displayRange ||
     !isAuthenticated ||
-    hasConflict ||
-    companyName.trim().length === 0;
+    !range ||
+    !plan ||
+    selectedSeats.length === 0 ||
+    !companyName.trim() ||
+    hasConflicts;
 
   return (
     <Modal
-      title={seat ? `Reserve ${seat.name}` : "Reserve"}
-      open={!!seat}
+      title="Confirm Reservation"
+      open={open}
       onCancel={onClose}
-      onOk={() =>
-        onReserve({
-          seat,
-          type: selectedType,
-          companyName,
-          range: displayRange,
-        })
-      }
+      onOk={onConfirm}
       okButtonProps={{ disabled }}
       okText={isAuthenticated ? "Reserve" : "Log in to Reserve"}
       destroyOnClose
@@ -62,66 +43,84 @@ const ReservationModal = ({
         />
       )}
 
-      <div style={{ marginBottom: 10 }}>
-        <Text strong>Booking type:</Text>
-        <Select
-          value={selectedType}
-          onChange={onTypeChange}
-          style={{ width: "100%", marginTop: 8 }}
-          options={[
-            { value: "daily", label: "Daily" },
-            { value: "weekly", label: "Weekly (7 days)" },
-            { value: "monthly", label: "Monthly" },
-          ]}
-        />
-      </div>
-
-      {displayRange && (
+      {range && (
         <div style={{ marginBottom: 10 }}>
           <Text strong>Range:</Text>
           <div style={{ marginTop: 6 }}>
-            <Tag>{displayRange.start}</Tag> to <Tag>{displayRange.end}</Tag>
+            <Tag>{range.start}</Tag> <Text>to</Text> <Tag>{range.end}</Tag>
           </div>
         </div>
       )}
 
-      {seat?.bookedRanges?.length > 0 && (
+      {plan && (
         <div style={{ marginBottom: 10 }}>
-          <Text strong>Existing bookings for this seat:</Text>
-          <Space direction="vertical" style={{ marginTop: 6 }}>
-            {seat.bookedRanges.map((b, i) => (
-              <div key={i}>
-                <Tag>{b.start}</Tag> to <Tag>{b.end}</Tag>{" "}
-                <Text>({b.type})</Text>
-              </div>
-            ))}
-          </Space>
+          <Text strong>Plan:</Text> <Tag>{plan}</Tag>
         </div>
       )}
 
-      {hasConflict && (
-        <Alert
-          message="This seat has a conflicting reservation during the selected period."
-          type="error"
-          showIcon
-          style={{ marginTop: 10 }}
-        />
+      <div style={{ marginBottom: 10 }}>
+        <Text strong>Selected seats:</Text>
+        {selectedSeats.length === 0 ? (
+          <div style={{ marginTop: 6 }}>
+            <Text type="secondary">No seats selected.</Text>
+          </div>
+        ) : (
+          <List
+            size="small"
+            dataSource={selectedSeats}
+            renderItem={(s) => (
+              <List.Item style={{ padding: "4px 0" }}>
+                <Tag>{s.name}</Tag>
+              </List.Item>
+            )}
+            style={{ marginTop: 6, maxHeight: 160, overflowY: "auto" }}
+          />
+        )}
+      </div>
+
+      {userEmail && (
+        <div style={{ marginBottom: 10 }}>
+          <Text strong>Reservation under:</Text>{" "}
+          <Text type="secondary">{userEmail}</Text>
+        </div>
       )}
 
-      <div style={{ marginTop: 10 }}>
+      <div style={{ marginBottom: 10 }}>
         <Text strong>Company / Organization:</Text>
         <Input
-          placeholder="Enter company name"
+          placeholder="Enter company / organization name"
           value={companyName}
           onChange={(e) => onCompanyNameChange(e.target.value)}
           style={{ marginTop: 6 }}
         />
       </div>
 
-      {userEmail && (
-        <div style={{ marginTop: 10 }}>
-          <Text type="secondary">Reservation under: {userEmail}</Text>
-        </div>
+      {hasConflicts && conflictDetails.length > 0 && (
+        <Alert
+          type="error"
+          showIcon
+          style={{ marginTop: 10 }}
+          message="Some selected seats have conflicting reservations."
+          description={
+            <List
+              size="small"
+              dataSource={conflictDetails}
+              renderItem={(item) => (
+                <List.Item>
+                  <div>
+                    <Text strong>{item.name}</Text>
+                    {item.reservations.map((r, idx) => (
+                      <div key={idx}>
+                        <Tag>{r.startDate}</Tag> <Text>to</Text>{" "}
+                        <Tag>{r.endDate}</Tag> <Text>({r.type})</Text>
+                      </div>
+                    ))}
+                  </div>
+                </List.Item>
+              )}
+            />
+          }
+        />
       )}
     </Modal>
   );

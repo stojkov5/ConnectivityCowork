@@ -6,6 +6,22 @@ import { computeRange } from "../utils/dateRange.js";
 
 const router = express.Router();
 
+// ADMIN: get all reservations
+router.get("/admin/all", verifyToken, async (req, res) => {
+  try {
+    if (!req.user || !req.user.isAdmin) {
+      return res.status(403).json({ message: "Admin only" });
+    }
+
+    const reservations = await Reservation.find({}).sort({ startDate: 1 });
+    res.json({ reservations });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 /**
  * GET /api/reservations
  * Optional query:

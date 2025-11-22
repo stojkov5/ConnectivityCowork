@@ -1,5 +1,14 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { Row, Col, DatePicker, Alert, Tag, message } from "antd";
+import {
+  Row,
+  Col,
+  DatePicker,
+  Alert,
+  Tag,
+  message,
+  Select,
+  Button,
+} from "antd";
 import dayjs from "dayjs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -77,24 +86,23 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const normalizeDate = (d) => dayjs(d).format("YYYY-MM-DD");
 
-const computeRange = (type, selectedDate) => {
+const computeRange = (plan, selectedDate) => {
   if (!selectedDate) return null;
   const d = dayjs(selectedDate);
 
-  if (type === "daily") return { start: normalizeDate(d), end: normalizeDate(d) };
-
-  if (type === "weekly") {
+  if (plan === "daily") {
+    return { start: normalizeDate(d), end: normalizeDate(d) };
+  }
+  if (plan === "weekly") {
     const s = d.startOf("day");
     const e = s.add(6, "day");
     return { start: normalizeDate(s), end: normalizeDate(e) };
   }
-
-  if (type === "monthly") {
+  if (plan === "monthly") {
     const s = d.startOf("month");
     const e = d.endOf("month");
     return { start: normalizeDate(s), end: normalizeDate(e) };
   }
-
   return null;
 };
 
@@ -112,12 +120,12 @@ const Center = ({ isLoggedInProp = null }) => {
     typeof isLoggedInProp === "boolean" ? isLoggedInProp : !!token;
 
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedSeat, setSelectedSeat] = useState(null);
-  const [selectedType, setSelectedType] = useState("daily");
+  const [selectedPlan, setSelectedPlan] = useState(null); // "daily" | "weekly" | "monthly"
+  const [selectedSeatIds, setSelectedSeatIds] = useState([]);
   const [showOverview, setShowOverview] = useState(false);
   const [activeOfficeId, setActiveOfficeId] = useState("centar");
-
   const [companyName, setCompanyName] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
 
   const activeOffice = useMemo(
     () => offices.find((o) => o.id === activeOfficeId),
@@ -146,14 +154,14 @@ const Center = ({ isLoggedInProp = null }) => {
   });
 
   const createReservation = useMutation({
-    mutationFn: async ({ seatId, plan, startDate, companyName }) => {
+    mutationFn: async ({ seatIds, plan, startDate, companyName }) => {
       return axios.post(
         `${API_URL}/api/reservations`,
         {
           location: "centar",
           officeId: activeOfficeId,
           resourceType: "seat",
-          resourceIds: [seatId],
+          resourceIds: seatIds,
           plan,
           startDate,
           companyName,
@@ -164,11 +172,12 @@ const Center = ({ isLoggedInProp = null }) => {
       );
     },
     onSuccess: () => {
-      message.success("Reservation created.");
+      message.success("Reservation(s) created.");
       queryClient.invalidateQueries(["reservations", activeOfficeId]);
-      setSelectedSeat(null);
-      setSelectedType("daily");
+      setSelectedSeatIds([]);
+      setSelectedPlan(null);
       setCompanyName("");
+      setModalOpen(false);
     },
     onError: (err) => {
       const msg =
@@ -178,29 +187,59 @@ const Center = ({ isLoggedInProp = null }) => {
     },
   });
 
+  // Range for the current date + plan
+  const range =
+    selectedDate && selectedPlan
+      ? computeRange(selectedPlan, selectedDate)
+      : null;
+
+  const getConflictingReservationsForRange = useCallback(
+    (seatId, rangeObj) => {
+      if (!rangeObj) return [];
+      return reservations.filter(
+        (r) =>
+          r.seatId === seatId &&
+          rangesOverlap(r.startDate, r.endDate, rangeObj.start, rangeObj.end)
+      );
+    },
+    [reservations]
+  );
+
+  // Seats with status: disabled / taken / free / selected
   const seatsWithStatus = useMemo(() => {
     if (!activeOffice) return [];
 
-    if (!selectedDate) {
+    // No date or no plan -> everything disabled (gray)
+    if (!selectedDate || !selectedPlan) {
       return activeOffice.seats.map((seat) => ({
         ...seat,
-        status: "free",
-        bookedRanges: [],
+        status: "disabled",
+        bookedRanges: reservations
+          .filter((r) => r.seatId === seat.id)
+          .map((r) => ({
+            start: r.startDate,
+            end: r.endDate,
+            type: r.type,
+          })),
       }));
     }
 
-    const formatted = selectedDate.format("YYYY-MM-DD");
-
+    // We have date + plan -> mark conflicts immediately
     return activeOffice.seats.map((seat) => {
-      const booked = reservations.filter(
-        (r) =>
-          r.seatId === seat.id &&
-          rangesOverlap(r.startDate, r.endDate, formatted, formatted)
-      );
+      const seatConflicts = getConflictingReservationsForRange(seat.id, range);
+
+      let status;
+      if (seatConflicts.length > 0) {
+        status = "taken"; // red + not clickable
+      } else if (selectedSeatIds.includes(seat.id)) {
+        status = "selected"; // yellow
+      } else {
+        status = "free"; // green
+      }
 
       return {
         ...seat,
-        status: booked.length > 0 ? "taken" : "free",
+        status,
         bookedRanges: reservations
           .filter((r) => r.seatId === seat.id)
           .map((r) => ({
@@ -210,39 +249,91 @@ const Center = ({ isLoggedInProp = null }) => {
           })),
       };
     });
-  }, [activeOffice, selectedDate, reservations]);
+  }, [
+    activeOffice,
+    selectedDate,
+    selectedPlan,
+    reservations,
+    selectedSeatIds,
+    range,
+    getConflictingReservationsForRange,
+  ]);
 
-  const getConflictingReservationsForRange = useCallback(
-    (seatId, range) => {
-      if (!range) return [];
-      return reservations.filter(
-        (r) =>
-          r.seatId === seatId &&
-          rangesOverlap(r.startDate, r.endDate, range.start, range.end)
-      );
-    },
-    [reservations]
-  );
-
+  // Click handler: only allowed when status is free or selected
   const handleSeatClick = (seat) => {
-    if (!selectedDate) return message.error("Select a date first");
+    if (!selectedDate || !selectedPlan) {
+      message.error("Select a date and plan first");
+      return;
+    }
+    if (seat.status === "taken" || seat.status === "disabled") return;
 
-    setSelectedSeat({ ...seat, selectedDate });
-    setSelectedType("daily");
+    setSelectedSeatIds((prev) =>
+      prev.includes(seat.id)
+        ? prev.filter((id) => id !== seat.id)
+        : [...prev, seat.id]
+    );
   };
 
-  const handleReserve = ({ seat, type, companyName, range }) => {
-    if (!isAuthenticated)
-      return message.error("You must be logged in to reserve.");
+  // Build conflict details for selected seats
+  const conflictDetails = useMemo(() => {
+    if (!range) return [];
+    const list = [];
+    for (const seatId of selectedSeatIds) {
+      const seat = activeOffice?.seats.find((s) => s.id === seatId);
+      const conflicts = getConflictingReservationsForRange(seatId, range);
+      if (conflicts.length > 0) {
+        list.push({
+          id: seatId,
+          name: seat?.name || seatId,
+          reservations: conflicts.map((r) => ({
+            startDate: r.startDate,
+            endDate: r.endDate,
+            type: r.type,
+          })),
+        });
+      }
+    }
+    return list;
+  }, [
+    selectedSeatIds,
+    range,
+    getConflictingReservationsForRange,
+    activeOffice,
+  ]);
 
-    const conflicts = getConflictingReservationsForRange(seat.id, range);
+  const hasConflicts = conflictDetails.length > 0;
 
-    if (conflicts.length > 0)
-      return message.error("Seat is already booked for that range.");
+  const handleOpenModal = () => {
+    if (!isAuthenticated) {
+      message.error("You must be logged in to reserve.");
+      return;
+    }
+    if (!selectedDate) {
+      message.error("Select a date first.");
+      return;
+    }
+    if (!selectedPlan) {
+      message.error("Select a plan.");
+      return;
+    }
+    if (selectedSeatIds.length === 0) {
+      message.error("Select at least one seat.");
+      return;
+    }
+    if (hasConflicts) {
+      message.error(
+        "Some selected seats are already booked in that period. Adjust your selection or plan."
+      );
+      return;
+    }
+    setModalOpen(true);
+  };
 
+  const handleConfirmReserve = () => {
+    if (!range) return;
     createReservation.mutate({
-      seatId: seat.id,
-      plan: type,
+      seatIds: selectedSeatIds,
+      plan: selectedPlan,
       startDate: range.start,
       companyName,
     });
@@ -258,7 +349,7 @@ const Center = ({ isLoggedInProp = null }) => {
 
       const bookedIds = new Set(reservationsForDay.map((r) => r.seatId));
 
-      if (bookedIds.size === activeOffice.seats.length)
+      if (activeOffice && bookedIds.size === activeOffice.seats.length)
         return (
           <div className="calendar-dot bg-red-500 text-white">
             {current.date()}
@@ -277,6 +368,18 @@ const Center = ({ isLoggedInProp = null }) => {
     [reservations, activeOffice]
   );
 
+  const selectedSeats = useMemo(() => {
+    if (!activeOffice) return [];
+    return activeOffice.seats.filter((s) => selectedSeatIds.includes(s.id));
+  }, [activeOffice, selectedSeatIds]);
+
+  const reserveDisabled =
+    !isAuthenticated ||
+    !selectedDate ||
+    !selectedPlan ||
+    selectedSeatIds.length === 0 ||
+    hasConflicts;
+
   return (
     <div className="bg-gray-50 min-h-screen py-16 fade-in">
       <Row justify="center">
@@ -287,14 +390,16 @@ const Center = ({ isLoggedInProp = null }) => {
             </h2>
 
             <Row gutter={[24, 24]}>
+              {/* LEFT PANEL */}
               <Col xs={24} md={6}>
                 <div className="bg-white rounded-xl shadow-md p-5 space-y-5 card-hover flex flex-col gap-5">
+                  {/* Date */}
                   <DatePicker
                     value={selectedDate}
                     onChange={(d) => {
                       setSelectedDate(d);
-                      setSelectedSeat(null);
-                      setSelectedType("daily");
+                      setSelectedSeatIds([]);
+                      setSelectedPlan(null);
                     }}
                     disabledDate={(c) => c && c < dayjs().startOf("day")}
                     cellRender={dateRender}
@@ -303,9 +408,13 @@ const Center = ({ isLoggedInProp = null }) => {
                     placeholder="Select a date"
                   />
 
+                  {/* Office selector */}
                   <select
                     value={activeOfficeId}
-                    onChange={(e) => setActiveOfficeId(e.target.value)}
+                    onChange={(e) => {
+                      setActiveOfficeId(e.target.value);
+                      setSelectedSeatIds([]);
+                    }}
                     className="w-full border rounded-md py-2 px-3 text-gray-700 focus:ring-2 focus:ring-orange-500"
                   >
                     {offices.map((o) => (
@@ -315,13 +424,41 @@ const Center = ({ isLoggedInProp = null }) => {
                     ))}
                   </select>
 
-                  <button
-                    onClick={() => setShowOverview((prev) => !prev)}
-                    className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm"
-                  >
-                    {showOverview ? "Hide Overview" : "Show Overview"}
-                  </button>
+                  {/* Plan selector */}
+                  <Select
+                    value={selectedPlan}
+                    onChange={setSelectedPlan}
+                    placeholder="Select plan"
+                    disabled={!selectedDate}
+                    style={{ width: "100%" }}
+                    options={[
+                      { value: "daily", label: "Daily" },
+                      { value: "weekly", label: "Weekly" },
+                      { value: "monthly", label: "Monthly" },
+                    ]}
+                  />
 
+                  {/* Reserve button */}
+                  <Button
+                    type="primary"
+                    block
+                    disabled={reserveDisabled}
+                    onClick={handleOpenModal}
+                  >
+                    Reserve
+                  </Button>
+
+                  {/* Conflict info */}
+                  {hasConflicts && range && (
+                    <Alert
+                      type="error"
+                      showIcon
+                      className="rounded-md"
+                      message="Some selected seats are already booked in this period. Change your selection or plan."
+                    />
+                  )}
+
+                  {/* Info about free/selected/booked */}
                   {selectedDate && (
                     <Alert
                       className="rounded-md"
@@ -335,10 +472,19 @@ const Center = ({ isLoggedInProp = null }) => {
                             }{" "}
                             free
                           </Tag>
+                          <Tag color="gold" className="ml-2">
+                            {
+                              seatsWithStatus.filter(
+                                (x) => x.status === "selected"
+                              ).length
+                            }{" "}
+                            selected
+                          </Tag>
                           <Tag color="red" className="ml-2">
                             {
-                              seatsWithStatus.filter((x) => x.status === "taken")
-                                .length
+                              seatsWithStatus.filter(
+                                (x) => x.status === "taken"
+                              ).length
                             }{" "}
                             booked
                           </Tag>
@@ -349,48 +495,58 @@ const Center = ({ isLoggedInProp = null }) => {
                     />
                   )}
 
-                  {showOverview && (
+                  {/* Overview */}
+                  <button
+                    onClick={() => setShowOverview((prev) => !prev)}
+                    className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm"
+                  >
+                    {showOverview ? "Hide Overview" : "Show Overview"}
+                  </button>
+
+                  {showOverview && activeOffice && (
                     <div className="max-h-[480px] overflow-y-auto border-t pt-3">
                       <BookingOverview
                         reservations={reservations}
                         seats={activeOffice.seats}
-                        showDelete={false} // delete can be added later
+                        showDelete={false}
                       />
                     </div>
                   )}
                 </div>
               </Col>
 
+              {/* RIGHT PANEL */}
               <Col xs={24} md={18}>
                 <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
                   <FloorPlan
                     office={activeOffice}
                     seats={seatsWithStatus}
                     onSeatClick={handleSeatClick}
-                    statusColors={{ free: "#00ff00", taken: "#ff0000" }}
+                    statusColors={{
+                      disabled: "#d1d5db", // gray-300
+                      free: "#4ade80", // green
+                      selected: "#facc15", // yellow
+                      taken: "#ef4444", // red
+                    }}
                   />
                 </div>
               </Col>
             </Row>
 
+            {/* Modal */}
             <ReservationModal
-              seat={selectedSeat}
-              selectedType={selectedType}
-              onTypeChange={setSelectedType}
-              onClose={() => {
-                setSelectedSeat(null);
-                setSelectedType("daily");
-                setCompanyName("");
-              }}
-              onReserve={handleReserve}
-              computeRange={computeRange}
-              getConflictingReservationsForRange={
-                getConflictingReservationsForRange
-              }
-              isAuthenticated={isAuthenticated}
+              open={modalOpen}
+              onClose={() => setModalOpen(false)}
+              range={range}
+              plan={selectedPlan}
+              selectedSeats={selectedSeats}
               userEmail={user?.email}
               companyName={companyName}
               onCompanyNameChange={setCompanyName}
+              hasConflicts={hasConflicts}
+              conflictDetails={conflictDetails}
+              onConfirm={handleConfirmReserve}
+              isAuthenticated={isAuthenticated}
             />
           </div>
         </Col>
