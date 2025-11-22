@@ -1,10 +1,17 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { Row, Col, DatePicker, Alert, Tag, message, Card } from "antd";
+import { Row, Col, DatePicker, Alert, Tag, message } from "antd";
 import dayjs from "dayjs";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+
 import BookingOverview from "./BookingOverview";
 import FloorPlan from "./FloorPlan";
 import ReservationModal from "./ReservationModal";
+import { useAuth } from "../../../context/AuthContext.jsx";
+
 import "../../../styles/KiselaVoda.css";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const initialRooms = [
   { id: "room-1", name: "Room 1" },
@@ -22,77 +29,131 @@ const normalizeDate = (d) => dayjs(d).format("YYYY-MM-DD");
 const computeRange = (type, selectedDate) => {
   if (!selectedDate) return null;
   const d = dayjs(selectedDate);
-  if (type === "daily")
+
+  if (type === "daily") {
     return { start: normalizeDate(d), end: normalizeDate(d) };
+  }
+
   if (type === "weekly") {
     const s = d.startOf("day");
     const e = s.add(6, "day");
     return { start: normalizeDate(s), end: normalizeDate(e) };
   }
+
   if (type === "monthly") {
     const s = d.startOf("month");
     const e = d.endOf("month");
     return { start: normalizeDate(s), end: normalizeDate(e) };
   }
+
   return null;
 };
 
-const rangesOverlap = (aStart, aEnd, bStart, bEnd) => {
-  return !(
+const rangesOverlap = (aStart, aEnd, bStart, bEnd) =>
+  !(
     dayjs(aEnd).isBefore(dayjs(bStart)) || dayjs(aStart).isAfter(dayjs(bEnd))
   );
-};
-
-function useReservations() {
-  const getAll = () => JSON.parse(localStorage.getItem("reservations") || "[]");
-  const reservations = getAll();
-
-  const saveReservations = (newArr) => {
-    localStorage.setItem("reservations", JSON.stringify(newArr));
-    return newArr;
-  };
-
-  const addReservation = (newRes) => {
-    const latest = getAll();
-    const merged = [...latest, newRes];
-    saveReservations(merged);
-    return merged;
-  };
-  return { reservations, addReservation };
-}
 
 const KiselaVoda = ({ isLoggedInProp = null }) => {
-  const { reservations, addReservation } = useReservations();
+  const { token, user } = useAuth();
+  const queryClient = useQueryClient();
+
   const isAuthenticated =
-    typeof isLoggedInProp === "boolean"
-      ? isLoggedInProp
-      : !!localStorage.getItem("token");
+    typeof isLoggedInProp === "boolean" ? isLoggedInProp : !!token;
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedType, setSelectedType] = useState("daily");
   const [showOverview, setShowOverview] = useState(false);
+  const [companyName, setCompanyName] = useState("");
 
+  // Fetch reservations from backend
+  const { data: reservations = [] } = useQuery({
+    queryKey: ["reservations", "kiselavoda"],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/api/reservations`, {
+        params: {
+          location: "kiselavoda",
+          officeId: "kiselavoda",
+        },
+      });
+
+      return res.data.reservations.map((r) => ({
+        ...r,
+        roomId: r.resourceId,
+        roomName: r.resourceName,
+        type: r.plan,
+        startDate: dayjs(r.startDate).format("YYYY-MM-DD"),
+        endDate: dayjs(r.endDate).format("YYYY-MM-DD"),
+      }));
+    },
+  });
+
+  // Create reservation mutation
+  const createReservation = useMutation({
+    mutationFn: async ({ roomId, plan, startDate, companyName }) => {
+      return axios.post(
+        `${API_URL}/api/reservations`,
+        {
+          location: "kiselavoda",
+          officeId: "kiselavoda",
+          resourceType: "room",
+          resourceIds: [roomId],
+          plan,
+          startDate,
+          companyName,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    },
+    onSuccess: () => {
+      message.success("Reservation created.");
+      queryClient.invalidateQueries(["reservations", "kiselavoda"]);
+      setSelectedRoom(null);
+      setSelectedType("daily");
+      setCompanyName("");
+    },
+    onError: (err) => {
+      const msg =
+        err.response?.data?.message ||
+        "Failed to create reservation. Possibly a conflict.";
+      message.error(msg);
+    },
+  });
+
+  // Derive rooms with status based on reservations
   const rooms = useMemo(() => {
-    if (!selectedDate)
+    if (!selectedDate) {
       return initialRooms.map((r) => ({
         ...r,
         status: "free",
         bookedRanges: [],
       }));
+    }
+
     const formatted = selectedDate.format("YYYY-MM-DD");
+
     return initialRooms.map((room) => {
       const booked = reservations.filter(
         (r) =>
           r.roomId === room.id &&
           rangesOverlap(r.startDate, r.endDate, formatted, formatted)
       );
+
       return {
         ...room,
         status: booked.length > 0 ? "taken" : "free",
         bookedRanges: reservations
           .filter((r) => r.roomId === room.id)
-          .map((r) => ({ start: r.startDate, end: r.endDate, type: r.type })),
+          .map((r) => ({
+            start: r.startDate,
+            end: r.endDate,
+            type: r.type,
+          })),
       };
     });
   }, [selectedDate, reservations]);
@@ -109,49 +170,39 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     [reservations]
   );
 
-  const handleReserve = useCallback(() => {
-    if (!isAuthenticated) {
-      message.error("You must be logged in to reserve.");
-      return;
-    }
-    if (!selectedRoom || !selectedDate || !selectedType) return;
-    const range = computeRange(selectedType, selectedDate);
-    if (!range) return;
+  const handleReserve = useCallback(
+    ({ room, type, companyName, range }) => {
+      if (!isAuthenticated) {
+        message.error("You must be logged in to reserve.");
+        return;
+      }
+      if (!room || !selectedDate || !type || !range) return;
 
-    const conflicts = getConflictingReservationsForRange(
-      selectedRoom.id,
-      range
-    );
-    if (conflicts.length > 0) {
-      message.error("This room is already booked for (part of) that range.");
-      return;
-    }
+      const conflicts = getConflictingReservationsForRange(room.id, range);
+      if (conflicts.length > 0) {
+        message.error("This room is already booked for (part of) that range.");
+        return;
+      }
 
-    const newRes = {
-      roomId: selectedRoom.id,
-      roomName: selectedRoom.name,
-      type: selectedType,
-      startDate: range.start,
-      endDate: range.end,
-      createdAt: new Date().toISOString(),
-    };
-
-    addReservation(newRes);
-    message.success("Reservation created.");
-    setSelectedRoom(null);
-    setSelectedType("daily");
-  }, [
-    isAuthenticated,
-    selectedRoom,
-    selectedDate,
-    selectedType,
-    addReservation,
-    getConflictingReservationsForRange,
-  ]);
+      createReservation.mutate({
+        roomId: room.id,
+        plan: type,
+        startDate: range.start,
+        companyName,
+      });
+    },
+    [
+      isAuthenticated,
+      selectedDate,
+      getConflictingReservationsForRange,
+      createReservation,
+    ]
+  );
 
   const dateRender = useCallback(
     (current) => {
       const formatted = current.format("YYYY-MM-DD");
+
       const allTaken = initialRooms.every((room) =>
         reservations.some(
           (r) =>
@@ -159,25 +210,30 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
             rangesOverlap(r.startDate, r.endDate, formatted, formatted)
         )
       );
+
       const partiallyTaken =
         !allTaken &&
         reservations.some((r) =>
           rangesOverlap(r.startDate, r.endDate, formatted, formatted)
         );
 
-      if (allTaken)
+      if (allTaken) {
         return (
           <div className="calendar-dot bg-red-500 text-white">
             {current.date()}
           </div>
         );
-      if (partiallyTaken)
+      }
+      if (partiallyTaken) {
         return (
           <div className="calendar-dot border border-orange-400 text-orange-500 font-semibold">
             {current.date()}
           </div>
         );
-      return <div className="calendar-dot text-gray-700">{current.date()}</div>;
+      }
+      return (
+        <div className="calendar-dot text-gray-700">{current.date()}</div>
+      );
     },
     [reservations]
   );
@@ -256,7 +312,9 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                   <FloorPlan
                     rooms={rooms}
                     selectedDate={selectedDate}
-                    onRoomClick={setSelectedRoom}
+                    onRoomClick={(room) =>
+                      setSelectedRoom({ ...room, selectedDate })
+                    }
                   />
                 </div>
               </Col>
@@ -269,6 +327,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
               onClose={() => {
                 setSelectedRoom(null);
                 setSelectedType("daily");
+                setCompanyName("");
               }}
               onReserve={handleReserve}
               computeRange={computeRange}
@@ -276,6 +335,9 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                 getConflictingReservationsForRange
               }
               isAuthenticated={isAuthenticated}
+              userEmail={user?.email}
+              companyName={companyName}
+              onCompanyNameChange={setCompanyName}
             />
           </div>
         </Col>

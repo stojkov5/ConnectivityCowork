@@ -1,3 +1,4 @@
+// backend/middleware/auth.js
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import User from "../models/User.js";
@@ -15,11 +16,9 @@ export const verifyToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded.id).select("-password");
-    if (!user) {
-      return res.status(401).json({ message: "Invalid token user" });
-    }
+    if (!user) return res.status(401).json({ message: "Invalid token user" });
 
-    req.user = user; // attach full user (no password)
+    req.user = user;
     next();
   } catch (err) {
     console.error("verifyToken error:", err);

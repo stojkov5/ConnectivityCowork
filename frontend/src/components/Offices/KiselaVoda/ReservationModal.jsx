@@ -1,7 +1,6 @@
-// ReservationModal.jsx
+// src/components/Offices/KiselaVoda/ReservationModal.jsx
 import React, { useMemo } from "react";
-import { Modal, Select, Tag, Alert, Space, Typography } from "antd";
-import dayjs from "dayjs";
+import { Modal, Select, Tag, Alert, Space, Typography, Input } from "antd";
 
 const { Text } = Typography;
 
@@ -14,37 +13,40 @@ const ReservationModal = ({
   computeRange,
   getConflictingReservationsForRange,
   isAuthenticated,
+  userEmail,
+  companyName,
+  onCompanyNameChange,
 }) => {
-  // eslint-disable-next-line no-unused-vars
-  const range = useMemo(
-    () => (room ? computeRange(selectedType, dayjs()) : null),
-    [room, selectedType, computeRange]
-  );
+  const displayRange = useMemo(() => {
+    if (!room?.selectedDate) return null;
+    return computeRange(selectedType, room.selectedDate);
+  }, [room, selectedType, computeRange]);
 
-  const conflicts = room
-    ? getConflictingReservationsForRange(
-        room.id,
-        computeRange(selectedType, dayjs(room?.selectedDate || undefined))
-      )
-    : [];
+  const conflicts =
+    room && displayRange
+      ? getConflictingReservationsForRange(room.id, displayRange)
+      : [];
 
-  const hasConflict = conflicts && conflicts.length > 0;
-  const disabled = !room || hasConflict || !isAuthenticated;
-
-  const displayRange = room?.selectedDate
-    ? computeRange(selectedType, room.selectedDate)
-    : 
-      null;
+  const hasConflict = conflicts.length > 0;
+  const disabled =
+    !room || hasConflict || !isAuthenticated || !displayRange || !companyName;
 
   return (
     <Modal
       title={room ? `Reserve ${room.name}` : "Reserve"}
       open={!!room}
       onCancel={onClose}
-      onOk={onReserve}
+      onOk={() =>
+        onReserve({
+          room,
+          type: selectedType,
+          companyName,
+          range: displayRange,
+        })
+      }
       okButtonProps={{ disabled }}
       okText={isAuthenticated ? "Reserve" : "Log in to Reserve"}
-      destroyOnHidden
+      destroyOnClose
     >
       {!isAuthenticated && (
         <Alert
@@ -99,6 +101,22 @@ const ReservationModal = ({
           showIcon
           style={{ marginTop: 10 }}
         />
+      )}
+
+      <div style={{ marginTop: 10 }}>
+        <Text strong>Company / Organization:</Text>
+        <Input
+          placeholder="Enter company / organization name"
+          value={companyName}
+          onChange={(e) => onCompanyNameChange(e.target.value)}
+          style={{ marginTop: 6 }}
+        />
+      </div>
+
+      {userEmail && (
+        <div style={{ marginTop: 10 }}>
+          <Text type="secondary">Reservation will be under: {userEmail}</Text>
+        </div>
       )}
 
       {!room && (
