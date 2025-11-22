@@ -7,7 +7,8 @@ import KiselaVodaOffice from "./components/Offices/KiselaVoda/KiselaVoda";
 import CenterOffice from "./components/Offices/Center/Centar";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminRoute from "./components/AdminRoute";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -35,6 +36,16 @@ const router = createBrowserRouter([
       {
         path: "/register",
         element: <Register />,
+      },
+      {
+        path: "/admin",
+        element: <AdminRoute />,
+        children: [
+          {
+            index: true,
+            element: <AdminDashboard />,
+          },
+        ],
       },
     ],
   },

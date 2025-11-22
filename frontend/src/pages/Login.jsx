@@ -4,10 +4,10 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext.jsx";
 import { Row, Col } from "antd";
-import "../styles/Login.css"; // <-- custom css file
+import "../styles/Login.css";
 
 function Login() {
-  const { setIsLoggedIn } = useAuth();
+  const { login } = useAuth();  // <-- from AuthContext
   const [form, setForm] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
@@ -16,8 +16,16 @@ function Login() {
     mutationFn: (user) =>
       axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, user),
     onSuccess: (res) => {
-      localStorage.setItem("token", res.data.token);
-      setIsLoggedIn(true);
+      const { token, user } = res.data;
+
+      if (!token || !user) {
+        setMessage("Invalid server response");
+        return;
+      }
+
+      // 🔥 This stores both token and full user (with isAdmin) in context + localStorage
+      login(token, user);
+
       setMessage("Login successful!");
       navigate("/");
     },
@@ -38,10 +46,7 @@ function Login() {
     <Row className="login-container min-h-screen flex items-center justify-center raleway-600">
       <Col xs={22} sm={16} md={10} lg={8} xl={6}>
         <div className="login-box bg-white p-8 shadow-xl rounded-xl">
-          <h1 className="text-3xl  text-center mb-6">
-            LOGIN
-          </h1>
-
+          <h1 className="text-3xl text-center mb-6">LOGIN</h1>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 raleway-300">
             <input
               type="email"
@@ -52,7 +57,6 @@ function Login() {
               required
               className="login-input"
             />
-
             <input
               type="password"
               name="password"
@@ -62,7 +66,6 @@ function Login() {
               required
               className="login-input"
             />
-
             <button
               type="submit"
               className="login-btn"
@@ -71,9 +74,10 @@ function Login() {
               {loginMutation.isLoading ? "Logging in..." : "Login"}
             </button>
           </form>
-
           {message && (
-            <p className="mt-4 text-center text-gray-700 font-medium">{message}</p>
+            <p className="mt-4 text-center text-gray-700 font-medium">
+              {message}
+            </p>
           )}
         </div>
       </Col>

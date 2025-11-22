@@ -1,17 +1,18 @@
-// Updated Navbar.jsx with floating pill style
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { FiMenu, FiX } from "react-icons/fi";
 import { Row, Col } from "antd";
 import { HashLink } from "react-router-hash-link";
+import { useAuth } from "../context/AuthContext.jsx";
 
-const NavBar = ({ isLoggedIn, setIsLoggedIn }) => {
+const NavBar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { isLoggedIn, user, logout } = useAuth();
+
   const toggleMenu = () => setMenuOpen((prev) => !prev);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    setIsLoggedIn(false);
+    logout();
   };
 
   return (
@@ -73,6 +74,17 @@ const NavBar = ({ isLoggedIn, setIsLoggedIn }) => {
                   </NavLink>
                 </li>
 
+                {user?.isAdmin && (
+                  <li>
+                    <NavLink
+                      to="/admin"
+                      className="hover:text-[#ff8c00] transition"
+                    >
+                      DASHBOARD
+                    </NavLink>
+                  </li>
+                )}
+
                 {!isLoggedIn && (
                   <>
                     <li>
@@ -124,7 +136,7 @@ const NavBar = ({ isLoggedIn, setIsLoggedIn }) => {
 
       {/* Mobile Menu */}
       <div
-        className={`lg:hidden fixed top-0 left-0 w-full h-full bg-white z-999 transform transition-transform duration-300 ease-in-out ${
+        className={`lg:hidden fixed top-0 left-0 w-full h-full bg-white z-[999] transform transition-transform duration-300 ease-in-out ${
           menuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -158,6 +170,14 @@ const NavBar = ({ isLoggedIn, setIsLoggedIn }) => {
               SPACES
             </NavLink>
           </li>
+
+          {user?.isAdmin && (
+            <li>
+              <NavLink to="/admin" onClick={toggleMenu}>
+                DASHBOARD
+              </NavLink>
+            </li>
+          )}
 
           {!isLoggedIn && (
             <>
