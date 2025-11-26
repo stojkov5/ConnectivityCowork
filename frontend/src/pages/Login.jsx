@@ -5,9 +5,9 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext.jsx";
 import { Row, Col } from "antd";
 import "../styles/Login.css";
-
+import { Link } from "react-router-dom";
 function Login() {
-  const { login } = useAuth();  // <-- from AuthContext
+  const { login } = useAuth(); // <-- from AuthContext
   const [form, setForm] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
@@ -47,7 +47,10 @@ function Login() {
       <Col xs={22} sm={16} md={10} lg={8} xl={6}>
         <div className="login-box bg-white p-8 shadow-xl rounded-xl">
           <h1 className="text-3xl text-center mb-6">LOGIN</h1>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4 raleway-300">
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-4 raleway-300"
+          >
             <input
               type="email"
               name="email"
@@ -73,6 +76,12 @@ function Login() {
             >
               {loginMutation.isLoading ? "Logging in..." : "Login"}
             </button>
+            <p className="text-center">
+              Don't have an account?{" "}
+              <Link to="/register" className="text-blue-500">
+                Register
+              </Link>
+            </p>
           </form>
           {message && (
             <p className="mt-4 text-center text-gray-700 font-medium">

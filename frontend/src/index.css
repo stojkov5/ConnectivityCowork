@@ -7,7 +7,6 @@ body {
 }
 body {
   font-size: 16px !important;
-  
 }
 .section-header {
   font-size: 1.75rem;
@@ -87,6 +86,11 @@ li a:hover {
 .logout:hover {
   color: #f15a24 !important;
 }
+.login-button {
+  font-size: 17px !important;
+  background-color: none !important;
+  color: #333333 !important;
+}
 .landing-btn {
   background-color: #f15a24;
   color: white;
@@ -99,4 +103,3 @@ li a:hover {
 p {
   color: #333333;
 }
-

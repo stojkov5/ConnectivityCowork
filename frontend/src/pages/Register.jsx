@@ -5,7 +5,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext.jsx";
 import { Row, Col } from "antd";
 import "../styles/Login.css";
-
+import { Link } from "react-router-dom";
 function Register() {
   const { setIsLoggedIn } = useAuth();
   const [form, setForm] = useState({ username: "", email: "", password: "" });
@@ -85,6 +85,13 @@ function Register() {
             >
               {registerMutation.isLoading ? "Registering..." : "Register"}
             </button>
+
+            <p className="text-center text-gray-700 font-medium">
+              Already have an account?{" "}
+              <Link to="/login" className="text-blue-500">
+                Login
+              </Link>
+            </p>
           </form>
 
           {message && (

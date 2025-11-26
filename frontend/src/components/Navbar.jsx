@@ -23,11 +23,13 @@ const NavBar = () => {
             {/* Logo */}
             <Col xs={12} lg={4}>
               <NavLink to="/">
+                {/* Desktop Logo */}
                 <img
                   className="hidden md:block w-40"
                   src="/Images/Logo1.png"
                   alt="Desktop Logo"
                 />
+                {/* Mobile Logo */}
                 <img
                   className="md:hidden w-16"
                   src="/Images/Logo2.png"
@@ -84,47 +86,39 @@ const NavBar = () => {
                     </NavLink>
                   </li>
                 )}
+              </ul>
+            </Col>
 
-                {!isLoggedIn && (
-                  <>
-                    <li>
-                      <NavLink
-                        to="/login"
-                        className="hover:text-[#ff8c00] transition"
-                      >
-                        LOGIN
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink
-                        to="/register"
-                        className="hover:text-[#ff8c00] transition"
-                      >
-                        REGISTER
-                      </NavLink>
-                    </li>
-                  </>
-                )}
+            {/* Desktop Right Side (Login + Language) */}
+            <Col xs={12} lg={6}>
+              <div className="flex justify-end items-center gap-3">
+                {/* DESKTOP login/logout */}
+                <div className="hidden lg:block ">
+                  {!isLoggedIn && (
+                    <NavLink
+                      to="/login"
+                      className="font-medium login-button hover:text-[#ff8c00] transition"
+                    >
+                      LOGIN
+                    </NavLink>
+                  )}
 
-                {isLoggedIn && (
-                  <li>
+                  {isLoggedIn && (
                     <button
-                      className="hover:text-[#ff8c00] transition"
+                      className="text-[17px] hover:text-[#ff8c00] transition"
                       onClick={handleLogout}
                     >
                       LOGOUT
                     </button>
-                  </li>
-                )}
-              </ul>
-            </Col>
+                  )}
+                </div>
 
-            {/* Language + Burger */}
-            <Col xs={12} lg={6}>
-              <div className="flex justify-end items-center space-x-4">
+                {/* DESKTOP Language */}
                 <button className="hidden lg:block bg-[#ff8c00] text-white px-3 py-1 rounded-full text-sm shadow-md">
                   EN / MK
                 </button>
+
+                {/* MOBILE Hamburger */}
                 <button className="lg:hidden text-black" onClick={toggleMenu}>
                   {menuOpen ? <FiX size={28} /> : <FiMenu size={28} />}
                 </button>
@@ -136,7 +130,7 @@ const NavBar = () => {
 
       {/* Mobile Menu */}
       <div
-        className={`lg:hidden fixed top-0 left-0 w-full h-full bg-white z-[999] transform transition-transform duration-300 ease-in-out ${
+        className={`lg:hidden fixed top-0 left-0 w-full h-full bg-white z-999 transform transition-transform duration-300 ease-in-out ${
           menuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -180,18 +174,11 @@ const NavBar = () => {
           )}
 
           {!isLoggedIn && (
-            <>
-              <li>
-                <NavLink to="/login" onClick={toggleMenu}>
-                  LOGIN
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/register" onClick={toggleMenu}>
-                  REGISTER
-                </NavLink>
-              </li>
-            </>
+            <li>
+              <NavLink to="/login" onClick={toggleMenu}>
+                LOGIN
+              </NavLink>
+            </li>
           )}
 
           {isLoggedIn && (
