@@ -6,12 +6,12 @@ import { verifyToken, requireAdmin } from "../middleware/auth.js";
 const router = express.Router();
 
 /**
- * PUBLIC: Get all plans (for landing page)
  * GET /api/plans
+ * Public – used by frontend Plans.jsx
  */
 router.get("/", async (req, res) => {
   try {
-    const plans = await Plan.find().sort({ order: 1 });
+    const plans = await Plan.find().sort({ createdAt: 1 });
     res.json({ plans });
   } catch (err) {
     console.error("GET /api/plans error:", err);
@@ -20,26 +20,26 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * ADMIN: Update a plan's price (and optionally title/color)
  * PUT /api/plans/:key
- * body: { price, title?, color? }
+ * Admin only – update price
+ * Body: { price: "700 MKD / per day" }
  */
 router.put("/:key", verifyToken, requireAdmin, async (req, res) => {
   try {
     const { key } = req.params;
-    const { price, title, color } = req.body;
+    const { price } = req.body;
 
-    if (!price) {
-      return res.status(400).json({ message: "Price is required" });
+    if (!price || typeof price !== "string") {
+      return res
+        .status(400)
+        .json({ message: "Price is required as a string" });
     }
 
-    const update = { price };
-    if (title) update.title = title;
-    if (color) update.color = color;
-
-    const plan = await Plan.findOneAndUpdate({ key }, update, {
-      new: true,
-    });
+    const plan = await Plan.findOneAndUpdate(
+      { key },
+      { price },
+      { new: true }
+    );
 
     if (!plan) {
       return res.status(404).json({ message: "Plan not found" });
@@ -53,8 +53,9 @@ router.put("/:key", verifyToken, requireAdmin, async (req, res) => {
 });
 
 /**
- * (OPTIONAL) ADMIN: Seed default plans
- * Call ONCE from Postman if collection is empty.
+ * POST /api/plans/seed
+ * Admin only – one-time helper to create the 4 default plans.
+ * You can leave it; it refuses to re-seed if data exists.
  */
 router.post("/seed", verifyToken, requireAdmin, async (req, res) => {
   try {
@@ -62,42 +63,38 @@ router.post("/seed", verifyToken, requireAdmin, async (req, res) => {
     if (count > 0) {
       return res
         .status(400)
-        .json({ message: "Plans already exist, seed skipped" });
+        .json({ message: "Plans collection already has data" });
     }
 
-    const defaults = [
+    const seedData = [
       {
         key: "daily",
         title: "DAILY ACCESS",
         price: "600 MKD / per day",
         color: "#ff8c00",
-        order: 1,
       },
       {
         key: "weekly",
         title: "WEEKLY ACCESS",
         price: "3500 MKD / per week",
         color: "#ffb84d",
-        order: 2,
       },
       {
         key: "monthly",
         title: "MONTHLY ACCESS",
         price: "11000 MKD / per month",
         color: "#ff8c00",
-        order: 3,
       },
       {
         key: "meeting",
         title: "MEETING ROOM",
         price: "3000 MKD / 4h • 6000 MKD / 8h",
         color: "#ff8c00",
-        order: 4,
       },
     ];
 
-    const created = await Plan.insertMany(defaults);
-    res.json({ message: "Plans seeded", plans: created });
+    const created = await Plan.insertMany(seedData);
+    res.status(201).json({ message: "Plans seeded", plans: created });
   } catch (err) {
     console.error("POST /api/plans/seed error:", err);
     res.status(500).json({ message: "Server error" });

@@ -1,3 +1,4 @@
+// backend/routes/admin.js
 import express from "express";
 import User from "../models/User.js";
 import { verifyToken, requireAdmin } from "../middleware/auth.js";

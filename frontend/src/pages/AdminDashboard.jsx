@@ -1,19 +1,7 @@
 import { useState } from "react";
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import {
-  Table,
-  Divider,
-  Typography,
-  Tag,
-  Input,
-  Button,
-  message,
-} from "antd";
+import { Table, Divider, Typography, Tag, Input, Button, message } from "antd";
 import dayjs from "dayjs";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -52,10 +40,9 @@ const AdminDashboard = () => {
 
   // USERS
   const {
-    data: users = [],
+    data: usersData = [],
     isLoading: usersLoading,
-    isError: usersError,
-    error: usersErrorObj,
+    error: usersError,
   } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
@@ -69,19 +56,15 @@ const AdminDashboard = () => {
 
   // RESERVATIONS
   const {
-    data: reservations = [],
-    isLoading: resLoading,
-    isError: resError,
-    error: resErrorObj,
+    data: reservationsData = [],
+    isLoading: reservationsLoading,
+    error: reservationsError,
   } = useQuery({
     queryKey: ["admin-reservations"],
     queryFn: async () => {
-      const res = await axios.get(
-        `${API_URL}/api/reservations/admin/all`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await axios.get(`${API_URL}/api/reservations/admin/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       return res.data.reservations;
     },
     enabled: hasToken && isAdmin,
@@ -89,10 +72,9 @@ const AdminDashboard = () => {
 
   // PLANS
   const {
-    data: plans = [],
+    data: plansData = [],
     isLoading: plansLoading,
-    isError: plansError,
-    error: plansErrorObj,
+    error: plansError,
   } = useQuery({
     queryKey: ["admin-plans"],
     queryFn: async () => {
@@ -102,7 +84,7 @@ const AdminDashboard = () => {
     enabled: hasToken && isAdmin,
   });
 
-  // UPDATE PLAN MUTATION
+  // UPDATE PLAN
   const updatePlan = useMutation({
     mutationFn: async ({ key, price }) => {
       return axios.put(
@@ -116,16 +98,36 @@ const AdminDashboard = () => {
     onSuccess: () => {
       message.success("Plan updated");
       queryClient.invalidateQueries(["admin-plans"]);
-      queryClient.invalidateQueries(["plans"]); // public plans
+      queryClient.invalidateQueries(["plans"]); // public Plans.jsx
     },
     onError: (err) => {
-      const msg =
-        err.response?.data?.message || "Failed to update plan price";
+      const msg = err.response?.data?.message || "Failed to update plan price";
       message.error(msg);
     },
   });
 
-  // USERS TABLE COLUMNS
+  // SEED PLANS (one-time)
+  const seedPlans = useMutation({
+    mutationFn: async () => {
+      return axios.post(
+        `${API_URL}/api/plans/seed`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    },
+    onSuccess: () => {
+      message.success("Default plans seeded");
+      queryClient.invalidateQueries(["admin-plans"]);
+      queryClient.invalidateQueries(["plans"]);
+    },
+    onError: (err) => {
+      const msg = err.response?.data?.message || "Failed to seed plans";
+      message.error(msg);
+    },
+  });
+
+  // TABLE COLUMNS
+
   const userColumns = [
     { title: "Username", dataIndex: "username", key: "username" },
     { title: "Email", dataIndex: "email", key: "email" },
@@ -143,7 +145,6 @@ const AdminDashboard = () => {
     },
   ];
 
-  // RESERVATIONS TABLE COLUMNS
   const reservationColumns = [
     {
       title: "Email",
@@ -188,11 +189,7 @@ const AdminDashboard = () => {
       key: "plan",
       render: (plan) => {
         const color =
-          plan === "daily"
-            ? "blue"
-            : plan === "weekly"
-            ? "purple"
-            : "orange";
+          plan === "daily" ? "blue" : plan === "weekly" ? "purple" : "orange";
         return <Tag color={color}>{plan.toUpperCase()}</Tag>;
       },
     },
@@ -222,7 +219,6 @@ const AdminDashboard = () => {
     },
   ];
 
-  // PLANS TABLE COLUMNS
   const planColumns = [
     {
       title: "Key",
@@ -267,72 +263,86 @@ const AdminDashboard = () => {
     },
   ];
 
-  return (
-    <div className="min-h-screen pt-24 px-4 md:px-16 bg-gray-50">
-      {!isAdmin ? (
+  if (!hasToken || !isAdmin) {
+    return (
+      <div className="min-h-screen pt-24 px-4 md:px-16 bg-gray-50">
         <div className="bg-white p-6 rounded-xl shadow-md">
           <Title level={3}>Access denied</Title>
           <p>You are not authorized to view this page.</p>
         </div>
-      ) : (
-        <>
-          <Title level={2}>Admin Dashboard</Title>
+      </div>
+    );
+  }
 
-          {/* USERS */}
-          <Divider>Registered Users</Divider>
-          <div className="bg-white p-4 rounded-xl shadow-md mb-12">
-            {usersError && (
-              <div className="mb-2 text-red-500">
-                {usersErrorObj?.response?.data?.message ||
-                  usersErrorObj?.message}
-              </div>
-            )}
-            <Table
-              rowKey="_id"
-              dataSource={users}
-              columns={userColumns}
-              loading={usersLoading}
-              pagination={{ pageSize: 10 }}
-            />
-          </div>
+  return (
+    <div className="min-h-screen pt-24 px-4 md:px-16 bg-gray-50">
+      <Title level={2}>Admin Dashboard</Title>
 
-          {/* RESERVATIONS */}
-          <Divider>All Reservations</Divider>
-          <div className="bg-white p-4 rounded-xl shadow-md mb-12">
-            {resError && (
-              <div className="mb-2 text-red-500">
-                {resErrorObj?.response?.data?.message ||
-                  resErrorObj?.message}
-              </div>
-            )}
-            <Table
-              rowKey="_id"
-              dataSource={reservations}
-              columns={reservationColumns}
-              loading={resLoading}
-              pagination={{ pageSize: 20 }}
-            />
+      {/* USERS */}
+      <Divider>Registered Users</Divider>
+      <div className="bg-white p-4 rounded-xl shadow-md mb-12">
+        {usersError && (
+          <div className="mb-2 text-red-500">
+            {usersError.response?.data?.message || usersError.message}
           </div>
+        )}
+        <Table
+          rowKey="_id"
+          dataSource={usersData}
+          columns={userColumns}
+          loading={usersLoading}
+          pagination={{ pageSize: 10 }}
+        />
+      </div>
 
-          {/* PLANS / PRICING */}
-          <Divider>Plans & Pricing</Divider>
-          <div className="bg-white p-4 rounded-xl shadow-md">
-            {plansError && (
-              <div className="mb-2 text-red-500">
-                {plansErrorObj?.response?.data?.message ||
-                  plansErrorObj?.message}
-              </div>
-            )}
-            <Table
-              rowKey="_id"
-              dataSource={plans}
-              columns={planColumns}
-              loading={plansLoading}
-              pagination={false}
-            />
+      {/* RESERVATIONS */}
+      <Divider>All Reservations</Divider>
+      <div className="bg-white p-4 rounded-xl shadow-md mb-12">
+        {reservationsError && (
+          <div className="mb-2 text-red-500">
+            {reservationsError.response?.data?.message ||
+              reservationsError.message}
           </div>
-        </>
-      )}
+        )}
+        <Table
+          rowKey="_id"
+          dataSource={reservationsData}
+          columns={reservationColumns}
+          loading={reservationsLoading}
+          pagination={{ pageSize: 20 }}
+        />
+      </div>
+
+      {/* PLANS */}
+      <Divider>Plans & Pricing</Divider>
+      <div className="bg-white p-4 rounded-xl shadow-md">
+        <div style={{ marginBottom: 16, display: "flex", gap: 8 }}>
+          <Button
+            onClick={() => seedPlans.mutate()}
+            loading={seedPlans.isLoading}
+            type="default"
+          >
+            Seed default plans
+          </Button>
+          <span className="text-gray-500 text-sm">
+            Click once on a fresh DB. If plans already exist, it will show an
+            error message.
+          </span>
+        </div>
+
+        {plansError && (
+          <div className="mb-2 text-red-500">
+            {plansError.response?.data?.message || plansError.message}
+          </div>
+        )}
+        <Table
+          rowKey={(record) => record._id || record.key}
+          dataSource={plansData}
+          columns={planColumns}
+          loading={plansLoading}
+          pagination={false}
+        />
+      </div>
     </div>
   );
 };

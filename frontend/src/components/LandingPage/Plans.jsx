@@ -5,53 +5,49 @@ import {
   TeamOutlined,
   CoffeeOutlined,
 } from "@ant-design/icons";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { Link } from "react-router-dom";
 import "../../styles/Plans.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const iconMap = {
+const iconByKey = {
   daily: <CalendarOutlined />,
   weekly: <ClockCircleOutlined />,
   monthly: <TeamOutlined />,
   meeting: <CoffeeOutlined />,
 };
 
-const fallbackCards = [
+// Fallback data if API fails or collection is empty
+const fallbackCardData = [
   {
     key: "daily",
     title: "DAILY ACCESS",
-    icon: <CalendarOutlined />,
     price: "600 MKD / per day",
     color: "#ff8c00",
   },
   {
     key: "weekly",
     title: "WEEKLY ACCESS",
-    icon: <ClockCircleOutlined />,
     price: "3500 MKD / per week",
     color: "#ffb84d",
   },
   {
     key: "monthly",
     title: "MONTHLY ACCESS",
-    icon: <TeamOutlined />,
     price: "11000 MKD / per month",
     color: "#ff8c00",
   },
   {
     key: "meeting",
     title: "MEETING ROOM",
-    icon: <CoffeeOutlined />,
     price: "3000 MKD / 4h • 6000 MKD / 8h",
     color: "#ff8c00",
   },
 ];
 
 const Plans = () => {
-  // eslint-disable-next-line no-unused-vars
   const { data, isLoading, isError } = useQuery({
     queryKey: ["plans"],
     queryFn: async () => {
@@ -60,20 +56,10 @@ const Plans = () => {
     },
   });
 
-  let cardData;
-
-  if (isError || !data || data.length === 0) {
-    // Fallback to static data if backend fails / empty
-    cardData = fallbackCards;
-  } else {
-    cardData = data.map((p) => ({
-      key: p.key,
-      title: p.title,
-      icon: iconMap[p.key] || <CalendarOutlined />,
-      price: p.price,
-      color: p.color || "#ff8c00",
-    }));
-  }
+  const plans =
+    !isError && Array.isArray(data) && data.length > 0
+      ? data
+      : fallbackCardData;
 
   return (
     <div className="booking-container container mx-auto py-5">
@@ -81,23 +67,39 @@ const Plans = () => {
         <h2 className="text-4xl md:text-5xl font-semibold mb-6 tracking-wide raleway-600">
           PLANS
         </h2>
+        {isLoading && (
+          <p className="text-gray-500 text-sm">Loading latest prices...</p>
+        )}
       </div>
 
       <Row gutter={[16, 16]} justify="center">
         <Col span={22}>
           <Row gutter={[16, 16]} justify="center">
-            {cardData.map((card) => (
-              <Col xs={24} sm={12} md={12} lg={6} key={card.key}>
+            {plans.map((plan) => (
+              <Col
+                xs={24}
+                sm={12}
+                md={12}
+                lg={6}
+                key={plan.key || plan.title}
+              >
                 <div className="booking-card">
                   <div className="card-content">
-                    <div className="icon" style={{ color: card.color }}>
-                      {card.icon}
+                    <div
+                      className="icon"
+                      style={{ color: plan.color || "#ff8c00" }}
+                    >
+                      {iconByKey[plan.key] || <CalendarOutlined />}
                     </div>
-                    <h3 className="raleway-600">{card.title}</h3>
+
+                    <h3 className="raleway-600">
+                      {plan.title || "PLAN"}
+                    </h3>
 
                     <h2 className="booking-price raleway-600 pb-3">
-                      {card.price}
+                      {plan.price}
                     </h2>
+
                     <Link
                       to="/officedetails"
                       className="booking-button rounded-full p-3"
