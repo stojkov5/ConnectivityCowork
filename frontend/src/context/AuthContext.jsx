@@ -1,6 +1,6 @@
 import { createContext, useState, useContext, useEffect } from "react";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState({
@@ -9,31 +9,32 @@ export const AuthProvider = ({ children }) => {
     token: null,
   });
 
-  // Initialize from localStorage on load
+  // Init from sessionStorage ONLY (dies when browser closes)
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userStr = localStorage.getItem("user");
+    const token = sessionStorage.getItem("token");
+    const userStr = sessionStorage.getItem("user");
+
     if (token && userStr) {
       try {
         const user = JSON.parse(userStr);
         setAuth({ isLoggedIn: true, user, token });
       } catch {
-        // corrupted storage, just clear it
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+        setAuth({ isLoggedIn: false, user: null, token: null });
       }
     }
   }, []);
 
   const login = (token, user) => {
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
+    sessionStorage.setItem("token", token);
+    sessionStorage.setItem("user", JSON.stringify(user));
     setAuth({ isLoggedIn: true, user, token });
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
     setAuth({ isLoggedIn: false, user: null, token: null });
   };
 
