@@ -80,6 +80,12 @@ li a {
 li a:hover {
   color: #f15a24 !important;
 }
+.login-button {
+  color: unset !important;
+}
+.login-button:hover {
+  color: #f15a24 !important;
+}
 .logout {
   color: #333333 !important;
 }
