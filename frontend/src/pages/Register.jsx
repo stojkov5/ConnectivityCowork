@@ -20,7 +20,7 @@ function Register() {
           "Registration successful. Please check your email to verify your account."
       );
       // redirect to login after short delay
-      setTimeout(() => navigate("/login"), 2500);
+      setTimeout(() => navigate("/login"), 10000);
     },
     onError: (err) => {
       setMessage(err.response?.data?.message || "Registration failed");
