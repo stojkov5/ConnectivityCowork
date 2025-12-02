@@ -97,8 +97,8 @@ const AdminDashboard = () => {
     },
     onSuccess: () => {
       message.success("Plan updated");
-      queryClient.invalidateQueries(["admin-plans"]);
-      queryClient.invalidateQueries(["plans"]); // public Plans.jsx
+      queryClient.invalidateQueries({ queryKey: ["admin-plans"] });
+      queryClient.invalidateQueries({ queryKey: ["plans"] }); // public Plans.jsx
     },
     onError: (err) => {
       const msg = err.response?.data?.message || "Failed to update plan price";
@@ -136,12 +136,14 @@ const AdminDashboard = () => {
       dataIndex: "isAdmin",
       key: "isAdmin",
       render: (v) => (v ? "Yes" : "No"),
+      responsive: ["sm"],
     },
     {
       title: "Created",
       dataIndex: "createdAt",
       key: "createdAt",
       render: (v) => (v ? new Date(v).toLocaleString() : ""),
+      responsive: ["md"],
     },
   ];
 
@@ -177,11 +179,13 @@ const AdminDashboard = () => {
         ) : (
           <Tag color="green">SEAT</Tag>
         ),
+      responsive: ["sm"],
     },
     {
       title: "Resource",
       dataIndex: "resourceId",
       key: "resourceId",
+      responsive: ["sm"],
     },
     {
       title: "Plan",
@@ -204,18 +208,21 @@ const AdminDashboard = () => {
       dataIndex: "endDate",
       key: "endDate",
       render: (d) => dayjs(d).format("YYYY-MM-DD"),
+      responsive: ["sm"],
     },
     {
       title: "Company",
       dataIndex: "companyName",
       key: "companyName",
       render: (v) => v || "-",
+      responsive: ["md"],
     },
     {
       title: "Created",
       dataIndex: "createdAt",
       key: "createdAt",
       render: (v) => dayjs(v).format("YYYY-MM-DD HH:mm"),
+      responsive: ["lg"],
     },
   ];
 
@@ -237,7 +244,7 @@ const AdminDashboard = () => {
       render: (_, record) => (
         <PriceEditor
           record={record}
-          saving={updatePlan.isLoading}
+          saving={updatePlan.isPending}
           onSave={(key, price) => updatePlan.mutate({ key, price })}
         />
       ),
@@ -260,14 +267,17 @@ const AdminDashboard = () => {
           <span>{c}</span>
         </div>
       ),
+      responsive: ["sm"],
     },
   ];
 
   if (!hasToken || !isAdmin) {
     return (
-      <div className="min-h-screen pt-24 px-4 md:px-16 bg-gray-50">
-        <div className="bg-white p-6 rounded-xl shadow-md">
-          <Title level={3}>Access denied</Title>
+      <div className="min-h-screen pt-24 px-4 sm:px-6 bg-gray-50">
+        <div className="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md">
+          <Title level={3} className="mb-2!">
+            Access denied
+          </Title>
           <p>You are not authorized to view this page.</p>
         </div>
       </div>
@@ -275,73 +285,93 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen pt-24 px-4 md:px-16 bg-gray-50">
-      <Title level={2}>Admin Dashboard</Title>
+    <div className="min-h-screen pt-24 px-3 sm:px-4 md:px-8 lg:px-16 bg-gray-50">
+      <div className="max-w-7xl mx-auto">
+        <Title
+          level={2}
+          className="text-2xl! sm:text-3xl! mb-4! sm:mb-6! md:mb-8!"
+        >
+          Admin Dashboard
+        </Title>
 
-      {/* USERS */}
-      <Divider>Registered Users</Divider>
-      <div className="bg-white p-4 rounded-xl shadow-md mb-12">
-        {usersError && (
-          <div className="mb-2 text-red-500">
-            {usersError.response?.data?.message || usersError.message}
+        {/* USERS */}
+        <Divider>Registered Users</Divider>
+        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-8 sm:mb-12">
+          {usersError && (
+            <div className="mb-2 text-red-500 text-sm">
+              {usersError.response?.data?.message || usersError.message}
+            </div>
+          )}
+          <div className="w-full overflow-x-auto">
+            <Table
+              rowKey="_id"
+              dataSource={usersData}
+              columns={userColumns}
+              loading={usersLoading}
+              size="small"
+              scroll={{ x: true }}
+              pagination={{ pageSize: 10 }}
+            />
           </div>
-        )}
-        <Table
-          rowKey="_id"
-          dataSource={usersData}
-          columns={userColumns}
-          loading={usersLoading}
-          pagination={{ pageSize: 10 }}
-        />
-      </div>
-
-      {/* RESERVATIONS */}
-      <Divider>All Reservations</Divider>
-      <div className="bg-white p-4 rounded-xl shadow-md mb-12">
-        {reservationsError && (
-          <div className="mb-2 text-red-500">
-            {reservationsError.response?.data?.message ||
-              reservationsError.message}
-          </div>
-        )}
-        <Table
-          rowKey="_id"
-          dataSource={reservationsData}
-          columns={reservationColumns}
-          loading={reservationsLoading}
-          pagination={{ pageSize: 20 }}
-        />
-      </div>
-
-      {/* PLANS */}
-      <Divider>Plans & Pricing</Divider>
-      <div className="bg-white p-4 rounded-xl shadow-md">
-        <div style={{ marginBottom: 16, display: "flex", gap: 8 }}>
-          <Button
-            onClick={() => seedPlans.mutate()}
-            loading={seedPlans.isLoading}
-            type="default"
-          >
-            Seed default plans
-          </Button>
-          <span className="text-gray-500 text-sm">
-            Click once on a fresh DB. If plans already exist, it will show an
-            error message.
-          </span>
         </div>
 
-        {plansError && (
-          <div className="mb-2 text-red-500">
-            {plansError.response?.data?.message || plansError.message}
+        {/* RESERVATIONS */}
+        <Divider>All Reservations</Divider>
+        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-8 sm:mb-12">
+          {reservationsError && (
+            <div className="mb-2 text-red-500 text-sm">
+              {reservationsError.response?.data?.message ||
+                reservationsError.message}
+            </div>
+          )}
+          <div className="w-full overflow-x-auto">
+            <Table
+              rowKey="_id"
+              dataSource={reservationsData}
+              columns={reservationColumns}
+              loading={reservationsLoading}
+              size="small"
+              scroll={{ x: true }}
+              pagination={{ pageSize: 20 }}
+            />
           </div>
-        )}
-        <Table
-          rowKey={(record) => record._id || record.key}
-          dataSource={plansData}
-          columns={planColumns}
-          loading={plansLoading}
-          pagination={false}
-        />
+        </div>
+
+        {/* PLANS */}
+        <Divider>Plans & Pricing</Divider>
+        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-4">
+            <Button
+              onClick={() => seedPlans.mutate()}
+              loading={seedPlans.isPending}
+              type="default"
+              size="small"
+            >
+              Seed default plans
+            </Button>
+            <span className="text-gray-500 text-xs sm:text-sm">
+              Click once on a fresh DB. If plans already exist, it will show an
+              error message.
+            </span>
+          </div>
+
+          {plansError && (
+            <div className="mb-2 text-red-500 text-sm">
+              {plansError.response?.data?.message || plansError.message}
+            </div>
+          )}
+          <div className="w-full overflow-x-auto">
+            <Table
+              rowKey={(record) => record._id || record.key}
+              dataSource={plansData}
+              columns={planColumns}
+              loading={plansLoading}
+              size="small"
+              scroll={{ x: true }}
+              pagination={false}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
