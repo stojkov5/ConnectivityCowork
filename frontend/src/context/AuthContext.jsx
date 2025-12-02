@@ -1,6 +1,7 @@
+// src/context/AuthContext.jsx
 import { createContext, useState, useContext, useEffect } from "react";
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState({
@@ -9,43 +10,41 @@ export const AuthProvider = ({ children }) => {
     token: null,
   });
 
-  // Init from sessionStorage ONLY (dies when browser closes)
+  // Load from sessionStorage on first render
   useEffect(() => {
-    const token = sessionStorage.getItem("token");
-    const userStr = sessionStorage.getItem("user");
-
-    if (token && userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        setAuth({ isLoggedIn: true, user, token });
-      } catch {
-        sessionStorage.removeItem("token");
-        sessionStorage.removeItem("user");
-        setAuth({ isLoggedIn: false, user: null, token: null });
+    try {
+      const stored = sessionStorage.getItem("auth");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.token) {
+          setAuth(parsed);
+        }
       }
+    } catch (e) {
+      console.error("Failed to parse auth from sessionStorage", e);
+      sessionStorage.removeItem("auth");
     }
   }, []);
 
+  // Persist to sessionStorage
+  useEffect(() => {
+    if (auth && auth.token) {
+      sessionStorage.setItem("auth", JSON.stringify(auth));
+    } else {
+      sessionStorage.removeItem("auth");
+    }
+  }, [auth]);
+
   const login = (token, user) => {
-    sessionStorage.setItem("token", token);
-    sessionStorage.setItem("user", JSON.stringify(user));
     setAuth({ isLoggedIn: true, user, token });
   };
 
   const logout = () => {
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("user");
     setAuth({ isLoggedIn: false, user: null, token: null });
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        ...auth, // isLoggedIn, user, token
-        login,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{ ...auth, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

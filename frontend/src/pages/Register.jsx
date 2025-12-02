@@ -1,3 +1,4 @@
+// src/pages/Register.jsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
@@ -5,23 +6,21 @@ import axios from "axios";
 import { Row, Col } from "antd";
 import "../styles/Login.css";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
 function Register() {
-  const [form, setForm] = useState({
-    username: "",
-    email: "",
-    password: "",
-  });
+  const [form, setForm] = useState({ username: "", email: "", password: "" });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const registerMutation = useMutation({
-    mutationFn: (newUser) => axios.post(`${API_URL}/api/auth/register`, newUser),
+    mutationFn: (newUser) =>
+      axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, newUser),
     onSuccess: (res) => {
-      setMessage(res.data.message || "Registration successful!");
-      // backend does not send token, so send them to login
-      setTimeout(() => navigate("/login"), 1000);
+      setMessage(
+        res.data.message ||
+          "Registration successful. Please check your email to verify your account."
+      );
+      // redirect to login after short delay
+      setTimeout(() => navigate("/login"), 2500);
     },
     onError: (err) => {
       setMessage(err.response?.data?.message || "Registration failed");
@@ -29,7 +28,7 @@ function Register() {
   });
 
   const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = (e) => {
     e.preventDefault();
