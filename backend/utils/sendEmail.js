@@ -4,53 +4,56 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const apiKey = process.env.SENDGRID_API_KEY;
-const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+const { SENDGRID_API_KEY, SENDGRID_FROM_EMAIL, FRONTEND_URL } = process.env;
 
-if (!apiKey) {
-  console.error("❌ SENDGRID_API_KEY is missing in .env");
-}
-if (!fromEmail) {
-  console.error("❌ SENDGRID_FROM_EMAIL is missing in .env");
-}
-
-if (apiKey) {
-  sgMail.setApiKey(apiKey);
+if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL || !FRONTEND_URL) {
+  console.log(
+    "[sendEmail] Missing SENDGRID_API_KEY, SENDGRID_FROM_EMAIL or FRONTEND_URL in .env"
+  );
+} else {
+  sgMail.setApiKey(SENDGRID_API_KEY);
 }
 
-export async function sendVerificationEmail(toEmail, token) {
-  if (!apiKey || !fromEmail) {
-    console.error("SendGrid not configured. Skipping email send.");
+/**
+ * Send verification email with a link like:
+ *   {FRONTEND_URL}/verify/:token
+ */
+export async function sendVerificationEmail(to, token) {
+  if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL || !FRONTEND_URL) {
+    console.log("[sendVerificationEmail] Missing configuration");
     return;
   }
 
-  // For now just hit the backend verify route directly
-  const backendBase =
-    process.env.API_BASE_URL || "https://connectivity-backend-pi66.onrender.com";
-
-  const verifyUrl = `${backendBase}/api/auth/verify/${token}`;
+  // Make sure we don't end with double slashes
+  const base = FRONTEND_URL.replace(/\/$/, "");
+  const verifyUrl = `${base}/verify/${token}`;
 
   const msg = {
-    to: toEmail,
-    from: fromEmail,
-    subject: "Verify your Connectivity Cowork account",
-    text: `Click this link to verify your account: ${verifyUrl}`,
+    to,
+    from: SENDGRID_FROM_EMAIL,
+    subject: "Verify your email - Connectivity Cowork",
+    text: `Hi, please verify your email by opening this link: ${verifyUrl}`,
     html: `
       <p>Hi,</p>
-      <p>Thanks for registering at <strong>Connectivity Cowork</strong>.</p>
-      <p>Please verify your email by clicking the link below:</p>
-      <p><a href="${verifyUrl}" target="_blank">${verifyUrl}</a></p>
+      <p>Thank you for registering at <strong>Connectivity Cowork</strong>.</p>
+      <p>Please confirm your email by clicking the button below:</p>
+      <p>
+        <a href="${verifyUrl}" 
+           style="display:inline-block;padding:10px 16px;background:#ff8c00;color:#fff;text-decoration:none;border-radius:4px;">
+          Verify Email
+        </a>
+      </p>
+      <p>Or open this link directly:<br/>
+        <a href="${verifyUrl}">${verifyUrl}</a>
+      </p>
+      <p>If you did not create an account, you can ignore this message.</p>
     `,
   };
 
-  console.log("📧 Sending verification mail to:", toEmail);
-  console.log("🔗 Verification URL:", verifyUrl);
-
   try {
     await sgMail.send(msg);
-    console.log("✅ Verification email sent");
+    console.log(`[sendVerificationEmail] Sent to ${to}`);
   } catch (err) {
-    console.error("❌ SENDGRID ERROR:", err.response?.body || err);
-    throw err;
+    console.error("[sendVerificationEmail] Error sending email:", err);
   }
 }
