@@ -1,18 +1,24 @@
-/* eslint-disable no-unused-vars */
-// src/components/Offices/Center/Centar.jsx
 import React, { useState, useMemo, useCallback } from "react";
-import { Row, Col, DatePicker, Alert, Tag, message, Select, Button } from "antd";
+import {
+  Row,
+  Col,
+  DatePicker,
+  Alert,
+  Tag,
+  message,
+  Select,
+  Button,
+} from "antd";
 import dayjs from "dayjs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
 import BookingOverview from "./BookingOverview";
 import FloorPlan from "./FloorPlan";
+import ReservationModal from "./ReservationModal";
 import { useAuth } from "../../../context/AuthContext.jsx";
 
 import "../../../styles/Centar.css";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 // === offices data ===
 const offices = [
@@ -76,26 +82,27 @@ const offices = [
   },
 ];
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const normalizeDate = (d) => dayjs(d).format("YYYY-MM-DD");
 
-const computeRange = (type, selectedDate) => {
+const computeRange = (plan, selectedDate) => {
   if (!selectedDate) return null;
   const d = dayjs(selectedDate);
 
-  if (type === "daily") return { start: normalizeDate(d), end: normalizeDate(d) };
-
-  if (type === "weekly") {
+  if (plan === "daily") {
+    return { start: normalizeDate(d), end: normalizeDate(d) };
+  }
+  if (plan === "weekly") {
     const s = d.startOf("day");
     const e = s.add(6, "day");
     return { start: normalizeDate(s), end: normalizeDate(e) };
   }
-
-  if (type === "monthly") {
+  if (plan === "monthly") {
     const s = d.startOf("month");
     const e = d.endOf("month");
     return { start: normalizeDate(s), end: normalizeDate(e) };
   }
-
   return null;
 };
 
@@ -113,20 +120,21 @@ const Center = ({ isLoggedInProp = null }) => {
     typeof isLoggedInProp === "boolean" ? isLoggedInProp : !!token;
 
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedPlan, setSelectedPlan] = useState("daily");
-  const [selectedSeats, setSelectedSeats] = useState([]); // multiple selection
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedSeatIds, setSelectedSeatIds] = useState([]);
   const [showOverview, setShowOverview] = useState(false);
-  const [activeOfficeId, setActiveOfficeId] = useState("centar");
   const [companyName, setCompanyName] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [activeOfficeId, setActiveOfficeId] = useState("centar");
 
   const activeOffice = useMemo(
     () => offices.find((o) => o.id === activeOfficeId),
     [activeOfficeId]
   );
 
-  // Fetch CONFIRMED reservations only
+  // === load reservations for this office from backend ===
   const { data: reservations = [] } = useQuery({
-    queryKey: ["reservations", activeOfficeId],
+    queryKey: ["reservations", "centar", activeOfficeId],
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/api/reservations`, {
         params: {
@@ -146,6 +154,7 @@ const Center = ({ isLoggedInProp = null }) => {
     },
   });
 
+  // === mutation for creating reservation (email-verified on backend) ===
   const createReservation = useMutation({
     mutationFn: async ({ seatIds, plan, startDate, companyName }) => {
       return axios.post(
@@ -160,55 +169,83 @@ const Center = ({ isLoggedInProp = null }) => {
           companyName,
         },
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
     },
-    onSuccess: (res) => {
+    onSuccess: () => {
       message.success(
-        res.data?.message ||
-          "Reservation request created. Check your email to confirm."
+        "Reservation request sent. Please confirm it from your email."
       );
-      // no confirmed reservation yet, but invalidate anyway
-      queryClient.invalidateQueries(["reservations", activeOfficeId]);
-      setSelectedSeats([]);
+      queryClient.invalidateQueries(["reservations", "centar", activeOfficeId]);
+      setSelectedSeatIds([]);
+      setSelectedPlan(null);
       setCompanyName("");
+      setModalOpen(false);
     },
     onError: (err) => {
       const msg =
         err.response?.data?.message ||
-        "Failed to create reservation request.";
+        "Failed to create reservation. Possibly a conflict.";
       message.error(msg);
     },
   });
 
+  // range for current date + plan
+  const range =
+    selectedDate && selectedPlan
+      ? computeRange(selectedPlan, selectedDate)
+      : null;
+
+  const getConflictingReservationsForRange = useCallback(
+    (seatId, rangeObj) => {
+      if (!rangeObj) return [];
+      return reservations.filter(
+        (r) =>
+          r.seatId === seatId &&
+          rangesOverlap(r.startDate, r.endDate, rangeObj.start, rangeObj.end)
+      );
+    },
+    [reservations]
+  );
+
+  // === derive seats with status (disabled / free / selected / taken) ===
   const seatsWithStatus = useMemo(() => {
     if (!activeOffice) return [];
 
-    if (!selectedDate) {
-      // no date -> everything greyed as "free"
+    // Before date+plan => everything greyed out (disabled)
+    if (!selectedDate || !selectedPlan) {
       return activeOffice.seats.map((seat) => ({
         ...seat,
-        status: "free",
-        bookedRanges: [],
+        status: "disabled",
+        bookedRanges: reservations
+          .filter((r) => r.seatId === seat.id)
+          .map((r) => ({
+            start: r.startDate,
+            end: r.endDate,
+            type: r.type,
+          })),
       }));
     }
 
-    const formatted = selectedDate.format("YYYY-MM-DD");
-
+    // With date+plan => check for overlap conflicts
     return activeOffice.seats.map((seat) => {
-      const booked = reservations.filter(
-        (r) =>
-          r.seatId === seat.id &&
-          rangesOverlap(r.startDate, r.endDate, formatted, formatted)
-      );
+      const conflicts = getConflictingReservationsForRange(seat.id, range);
 
-      const isBooked = booked.length > 0;
-      const isSelected = selectedSeats.includes(seat.id);
+      let status;
+      if (conflicts.length > 0) {
+        status = "taken"; // red, not clickable
+      } else if (selectedSeatIds.includes(seat.id)) {
+        status = "selected"; // yellow
+      } else {
+        status = "free"; // green
+      }
 
       return {
         ...seat,
-        status: isBooked ? "taken" : isSelected ? "selected" : "free",
+        status,
         bookedRanges: reservations
           .filter((r) => r.seatId === seat.id)
           .map((r) => ({
@@ -218,54 +255,68 @@ const Center = ({ isLoggedInProp = null }) => {
           })),
       };
     });
-  }, [activeOffice, selectedDate, reservations, selectedSeats]);
+  }, [
+    activeOffice,
+    reservations,
+    selectedDate,
+    selectedPlan,
+    range,
+    selectedSeatIds,
+    getConflictingReservationsForRange,
+  ]);
 
-  const dateRender = useCallback(
-    (current) => {
-      const formatted = current.format("YYYY-MM-DD");
-
-      const reservationsForDay = reservations.filter((r) =>
-        rangesOverlap(r.startDate, r.endDate, formatted, formatted)
-      );
-
-      const bookedIds = new Set(reservationsForDay.map((r) => r.seatId));
-
-      if (bookedIds.size === activeOffice.seats.length)
-        return (
-          <div className="calendar-dot bg-red-500 text-white">
-            {current.date()}
-          </div>
-        );
-
-      if (bookedIds.size > 0)
-        return (
-          <div className="calendar-dot border border-orange-400 text-orange-500 font-semibold">
-            {current.date()}
-          </div>
-        );
-
-      return <div className="calendar-dot text-gray-700">{current.date()}</div>;
-    },
-    [reservations, activeOffice]
+  const selectedSeats = useMemo(
+    () =>
+      activeOffice
+        ? activeOffice.seats.filter((s) => selectedSeatIds.includes(s.id))
+        : [],
+    [activeOffice, selectedSeatIds]
   );
 
-  const handleSeatClick = (seat) => {
-    if (!selectedDate) {
-      return message.error("Select a date first.");
+  // collect conflict details for selected seats
+  const conflictDetails = useMemo(() => {
+    if (!range) return [];
+    const list = [];
+    for (const seatId of selectedSeatIds) {
+      const seat = activeOffice?.seats.find((s) => s.id === seatId);
+      const conflicts = getConflictingReservationsForRange(seatId, range);
+      if (conflicts.length > 0) {
+        list.push({
+          id: seatId,
+          name: seat?.name || seatId,
+          reservations: conflicts.map((r) => ({
+            startDate: r.startDate,
+            endDate: r.endDate,
+            type: r.type,
+          })),
+        });
+      }
     }
-    if (!selectedPlan) {
-      return message.error("Select a plan first.");
-    }
-    if (seat.status === "taken") return;
+    return list;
+  }, [
+    selectedSeatIds,
+    range,
+    activeOffice,
+    getConflictingReservationsForRange,
+  ]);
 
-    setSelectedSeats((prev) =>
+  const hasConflicts = conflictDetails.length > 0;
+
+  const handleSeatClick = (seat) => {
+    if (!selectedDate || !selectedPlan) {
+      message.error("Select a date and plan first");
+      return;
+    }
+    if (seat.status === "taken" || seat.status === "disabled") return;
+
+    setSelectedSeatIds((prev) =>
       prev.includes(seat.id)
         ? prev.filter((id) => id !== seat.id)
         : [...prev, seat.id]
     );
   };
 
-  const handleReserveClick = () => {
+  const handleOpenModal = () => {
     if (!isAuthenticated) {
       message.error("You must be logged in to reserve.");
       return;
@@ -275,44 +326,71 @@ const Center = ({ isLoggedInProp = null }) => {
       return;
     }
     if (!selectedPlan) {
-      message.error("Select a plan first.");
+      message.error("Select a plan.");
       return;
     }
-    if (selectedSeats.length === 0) {
+    if (selectedSeatIds.length === 0) {
       message.error("Select at least one seat.");
       return;
     }
-    if (!companyName.trim()) {
-      message.error("Enter company / organization name.");
-      return;
-    }
-
-    const range = computeRange(selectedPlan, selectedDate);
-    if (!range) return;
-
-    // basic conflict check on client (confirmed reservations only)
-    const conflict = selectedSeats.some((seatId) =>
-      reservations.some(
-        (r) =>
-          r.seatId === seatId &&
-          rangesOverlap(r.startDate, r.endDate, range.start, range.end)
-      )
-    );
-
-    if (conflict) {
+    if (hasConflicts) {
       message.error(
-        "One or more selected seats are already booked in that period."
+        "Some selected seats are already booked in that period. Adjust your selection or plan."
       );
       return;
     }
+    setModalOpen(true);
+  };
 
+  const handleConfirmReserve = () => {
+    if (!range) return;
     createReservation.mutate({
-      seatIds: selectedSeats,
+      seatIds: selectedSeatIds,
       plan: selectedPlan,
       startDate: range.start,
       companyName,
     });
   };
+
+  // calendar color highlighting
+  const dateRender = useCallback(
+    (current) => {
+      const formatted = current.format("YYYY-MM-DD");
+
+      const reservationsForDay = reservations.filter((r) =>
+        rangesOverlap(r.startDate, r.endDate, formatted, formatted)
+      );
+
+      const bookedIds = new Set(reservationsForDay.map((r) => r.seatId));
+      const totalSeats = activeOffice ? activeOffice.seats.length : 0;
+
+      if (bookedIds.size === totalSeats && totalSeats > 0) {
+        return (
+          <div className="calendar-dot bg-red-500 text-white">
+            {current.date()}
+          </div>
+        );
+      }
+      if (bookedIds.size > 0) {
+        return (
+          <div className="calendar-dot border border-orange-400 text-orange-500 font-semibold">
+            {current.date()}
+          </div>
+        );
+      }
+      return (
+        <div className="calendar-dot text-gray-700">{current.date()}</div>
+      );
+    },
+    [reservations, activeOffice]
+  );
+
+  const reserveDisabled =
+    !isAuthenticated ||
+    !selectedDate ||
+    !selectedPlan ||
+    selectedSeatIds.length === 0 ||
+    hasConflicts;
 
   return (
     <div className="bg-gray-50 min-h-screen py-16 fade-in">
@@ -326,12 +404,13 @@ const Center = ({ isLoggedInProp = null }) => {
             <Row gutter={[24, 24]}>
               {/* LEFT PANEL */}
               <Col xs={24} md={6}>
-                <div className="bg-white rounded-xl shadow-md p-5 space-y-4 card-hover flex flex-col gap-4">
+                <div className="bg-white rounded-xl shadow-md p-5 space-y-5 card-hover flex flex-col gap-5">
                   <DatePicker
                     value={selectedDate}
                     onChange={(d) => {
                       setSelectedDate(d);
-                      setSelectedSeats([]);
+                      setSelectedSeatIds([]);
+                      setSelectedPlan(null);
                     }}
                     disabledDate={(c) => c && c < dayjs().startOf("day")}
                     cellRender={dateRender}
@@ -340,11 +419,26 @@ const Center = ({ isLoggedInProp = null }) => {
                     placeholder="Select a date"
                   />
 
+                  {/* Plan selector */}
+                  <Select
+                    value={selectedPlan}
+                    onChange={setSelectedPlan}
+                    placeholder="Select plan"
+                    disabled={!selectedDate}
+                    style={{ width: "100%" }}
+                    options={[
+                      { value: "daily", label: "Daily" },
+                      { value: "weekly", label: "Weekly" },
+                      { value: "monthly", label: "Monthly" },
+                    ]}
+                  />
+
+                  {/* Office selector */}
                   <select
                     value={activeOfficeId}
                     onChange={(e) => {
                       setActiveOfficeId(e.target.value);
-                      setSelectedSeats([]);
+                      setSelectedSeatIds([]);
                     }}
                     className="w-full border rounded-md py-2 px-3 text-gray-700 focus:ring-2 focus:ring-orange-500"
                   >
@@ -355,49 +449,24 @@ const Center = ({ isLoggedInProp = null }) => {
                     ))}
                   </select>
 
-                  <Select
-                    value={selectedPlan}
-                    onChange={setSelectedPlan}
-                    disabled={!selectedDate}
-                    className="w-full"
-                    options={[
-                      { value: "daily", label: "Daily" },
-                      { value: "weekly", label: "Weekly (7 days)" },
-                      { value: "monthly", label: "Monthly" },
-                    ]}
-                    placeholder="Select plan"
-                  />
-
-                  <input
-                    type="text"
-                    className="w-full border rounded-md py-2 px-3 text-gray-700 focus:ring-2 focus:ring-orange-500"
-                    placeholder="Company / Organization"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                  />
-
-                  <Button
-                    type="primary"
-                    className="w-full bg-orange-500"
-                    onClick={handleReserveClick}
-                    disabled={
-                      !isAuthenticated ||
-                      !selectedDate ||
-                      !selectedPlan ||
-                      selectedSeats.length === 0 ||
-                      !companyName.trim()
-                    }
-                    loading={createReservation.isLoading}
-                  >
-                    Reserve (email confirmation)
-                  </Button>
-
+                  {/* Reserve button */}
                   <button
-                    onClick={() => setShowOverview((prev) => !prev)}
-                    className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm"
+                    className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={reserveDisabled}
+                    onClick={handleOpenModal}
                   >
-                    {showOverview ? "Hide Overview" : "Show Overview"}
+                    Reserve
                   </button>
+
+                  {/* Conflict alert */}
+                  {hasConflicts && range && (
+                    <Alert
+                      type="error"
+                      showIcon
+                      className="rounded-md"
+                      message="Some selected seats are already booked in this period. Change your selection or plan."
+                    />
+                  )}
 
                   {selectedDate && (
                     <Alert
@@ -407,15 +476,25 @@ const Center = ({ isLoggedInProp = null }) => {
                           {selectedDate.format("YYYY-MM-DD")}
                           <Tag color="blue" className="ml-2">
                             {
-                              seatsWithStatus.filter((x) => x.status === "free")
-                                .length
+                              seatsWithStatus.filter(
+                                (x) => x.status === "free"
+                              ).length
                             }{" "}
                             free
                           </Tag>
+                          <Tag color="gold" className="ml-2">
+                            {
+                              seatsWithStatus.filter(
+                                (x) => x.status === "selected"
+                              ).length
+                            }{" "}
+                            selected
+                          </Tag>
                           <Tag color="red" className="ml-2">
                             {
-                              seatsWithStatus.filter((x) => x.status === "taken")
-                                .length
+                              seatsWithStatus.filter(
+                                (x) => x.status === "taken"
+                              ).length
                             }{" "}
                             booked
                           </Tag>
@@ -426,11 +505,18 @@ const Center = ({ isLoggedInProp = null }) => {
                     />
                   )}
 
+                  <button
+                    onClick={() => setShowOverview((prev) => !prev)}
+                    className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm"
+                  >
+                    {showOverview ? "Hide Overview" : "Show Overview"}
+                  </button>
+
                   {showOverview && (
                     <div className="max-h-[480px] overflow-y-auto border-t pt-3">
                       <BookingOverview
                         reservations={reservations}
-                        seats={activeOffice.seats}
+                        seats={activeOffice?.seats || []}
                         showDelete={false}
                       />
                     </div>
@@ -446,14 +532,31 @@ const Center = ({ isLoggedInProp = null }) => {
                     seats={seatsWithStatus}
                     onSeatClick={handleSeatClick}
                     statusColors={{
-                      free: "#00ff00",
-                      taken: "#ff0000",
-                      selected: "#ffd400",
+                      disabled: "#d1d5db",
+                      free: "#4ade80",
+                      selected: "#facc15",
+                      taken: "#ef4444",
                     }}
                   />
                 </div>
               </Col>
             </Row>
+
+            {/* Summary / email verification modal */}
+            <ReservationModal
+              open={modalOpen}
+              onClose={() => setModalOpen(false)}
+              range={range}
+              plan={selectedPlan}
+              selectedSeats={selectedSeats}
+              userEmail={user?.email}
+              companyName={companyName}
+              onCompanyNameChange={setCompanyName}
+              hasConflicts={hasConflicts}
+              conflictDetails={conflictDetails}
+              onConfirm={handleConfirmReserve}
+              isAuthenticated={isAuthenticated}
+            />
           </div>
         </Col>
       </Row>

@@ -4,7 +4,7 @@ import React from "react";
 const FloorPlan = React.memo(
   ({ rooms = [], onRoomClick, statusColors = {} }) => {
     const getFill = (status) =>
-      statusColors[status] || statusColors.free || "#cccccc";
+      statusColors[status] || statusColors.default || "#d1d5db";
 
     const getPathD = (id) =>
       ({
@@ -34,11 +34,10 @@ const FloorPlan = React.memo(
           alt="Kisela Voda floor plan"
           style={{
             position: "absolute",
+            inset: 0,
             width: "100%",
             height: "100%",
             objectFit: "contain",
-            top: 0,
-            left: 0,
           }}
         />
         <svg
@@ -46,10 +45,9 @@ const FloorPlan = React.memo(
           preserveAspectRatio="xMidYMid meet"
           style={{
             position: "absolute",
+            inset: 0,
             width: "100%",
             height: "100%",
-            top: 0,
-            left: 0,
           }}
         >
           {rooms.map((room) => (
@@ -58,11 +56,16 @@ const FloorPlan = React.memo(
               d={getPathD(room.id)}
               fill={getFill(room.status)}
               fillOpacity="0.5"
-              onClick={() =>
-                room.status !== "taken" && onRoomClick(room)
-              }
+              onClick={() => {
+                if (room.status === "free" || room.status === "selected") {
+                  onRoomClick(room);
+                }
+              }}
               style={{
-                cursor: room.status === "taken" ? "not-allowed" : "pointer",
+                cursor:
+                  room.status === "free" || room.status === "selected"
+                    ? "pointer"
+                    : "not-allowed",
                 transition: "fill 0.3s ease",
               }}
               onMouseEnter={(e) => (e.target.style.fillOpacity = "0.7")}

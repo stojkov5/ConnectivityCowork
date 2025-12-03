@@ -1,20 +1,27 @@
-// src/components/Offices/KiselaVoda/KiselaVoda.jsx
 import React, { useState, useMemo, useCallback } from "react";
-import { Row, Col, DatePicker, Alert, Tag, message, Select, Button } from "antd";
+import {
+  Row,
+  Col,
+  DatePicker,
+  Alert,
+  Tag,
+  message,
+  Select,
+} from "antd";
 import dayjs from "dayjs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
 import BookingOverview from "./BookingOverview";
 import FloorPlan from "./FloorPlan";
+import ReservationModal from "./ReservationModal";
 import { useAuth } from "../../../context/AuthContext.jsx";
 
 import "../../../styles/KiselaVoda.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-// === rooms data ===
-const rooms = [
+const initialRooms = [
   { id: "room-1", name: "Room 1" },
   { id: "room-2", name: "Room 2" },
   { id: "room-3", name: "Room 3" },
@@ -27,24 +34,23 @@ const rooms = [
 
 const normalizeDate = (d) => dayjs(d).format("YYYY-MM-DD");
 
-const computeRange = (type, selectedDate) => {
+const computeRange = (plan, selectedDate) => {
   if (!selectedDate) return null;
   const d = dayjs(selectedDate);
 
-  if (type === "daily") return { start: normalizeDate(d), end: normalizeDate(d) };
-
-  if (type === "weekly") {
+  if (plan === "daily") {
+    return { start: normalizeDate(d), end: normalizeDate(d) };
+  }
+  if (plan === "weekly") {
     const s = d.startOf("day");
     const e = s.add(6, "day");
     return { start: normalizeDate(s), end: normalizeDate(e) };
   }
-
-  if (type === "monthly") {
+  if (plan === "monthly") {
     const s = d.startOf("month");
     const e = d.endOf("month");
     return { start: normalizeDate(s), end: normalizeDate(e) };
   }
-
   return null;
 };
 
@@ -55,19 +61,20 @@ const rangesOverlap = (aStart, aEnd, bStart, bEnd) =>
   );
 
 const KiselaVoda = ({ isLoggedInProp = null }) => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const queryClient = useQueryClient();
 
   const isAuthenticated =
     typeof isLoggedInProp === "boolean" ? isLoggedInProp : !!token;
 
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedPlan, setSelectedPlan] = useState("daily");
-  const [selectedRooms, setSelectedRooms] = useState([]); // multi-select
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedRoomIds, setSelectedRoomIds] = useState([]);
   const [showOverview, setShowOverview] = useState(false);
   const [companyName, setCompanyName] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
 
-  // Fetch CONFIRMED reservations for Kisela voda
+  // === load reservations for KISELA VODA from backend ===
   const { data: reservations = [] } = useQuery({
     queryKey: ["reservations", "kiselavoda"],
     queryFn: async () => {
@@ -89,7 +96,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     },
   });
 
-  // Create reservation request (email verification happens on backend)
+  // === mutation for creating reservation (email-verified on backend) ===
   const createReservation = useMutation({
     mutationFn: async ({ roomIds, plan, startDate, companyName }) => {
       return axios.post(
@@ -104,52 +111,81 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
           companyName,
         },
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
     },
-    onSuccess: (res) => {
+    onSuccess: () => {
       message.success(
-        res.data?.message ||
-          "Reservation request created. Check your email to confirm."
+        "Reservation request sent. Please confirm it from your email."
       );
       queryClient.invalidateQueries(["reservations", "kiselavoda"]);
-      setSelectedRooms([]);
+      setSelectedRoomIds([]);
+      setSelectedPlan(null);
       setCompanyName("");
+      setModalOpen(false);
     },
     onError: (err) => {
       const msg =
         err.response?.data?.message ||
-        "Failed to create reservation request.";
+        "Failed to create reservation. Possibly a conflict.";
       message.error(msg);
     },
   });
 
-  // derive status per room for the selected day
+  // range for current date + plan
+  const range =
+    selectedDate && selectedPlan
+      ? computeRange(selectedPlan, selectedDate)
+      : null;
+
+  const getConflictingReservationsForRange = useCallback(
+    (roomId, rangeObj) => {
+      if (!rangeObj) return [];
+      return reservations.filter(
+        (r) =>
+          r.roomId === roomId &&
+          rangesOverlap(r.startDate, r.endDate, rangeObj.start, rangeObj.end)
+      );
+    },
+    [reservations]
+  );
+
+  // === derive rooms with status (disabled / free / selected / taken) ===
   const roomsWithStatus = useMemo(() => {
-    if (!selectedDate) {
-      return rooms.map((room) => ({
+    // Before date+plan => everything greyed out (disabled)
+    if (!selectedDate || !selectedPlan) {
+      return initialRooms.map((room) => ({
         ...room,
-        status: "free",
-        bookedRanges: [],
+        status: "disabled",
+        bookedRanges: reservations
+          .filter((r) => r.roomId === room.id)
+          .map((r) => ({
+            start: r.startDate,
+            end: r.endDate,
+            type: r.type,
+          })),
       }));
     }
 
-    const formatted = selectedDate.format("YYYY-MM-DD");
+    // With date+plan => check for overlap conflicts
+    return initialRooms.map((room) => {
+      const conflicts = getConflictingReservationsForRange(room.id, range);
 
-    return rooms.map((room) => {
-      const booked = reservations.filter(
-        (r) =>
-          r.roomId === room.id &&
-          rangesOverlap(r.startDate, r.endDate, formatted, formatted)
-      );
-
-      const isBooked = booked.length > 0;
-      const isSelected = selectedRooms.includes(room.id);
+      let status;
+      if (conflicts.length > 0) {
+        status = "taken"; // red, not clickable
+      } else if (selectedRoomIds.includes(room.id)) {
+        status = "selected"; // yellow
+      } else {
+        status = "free"; // green
+      }
 
       return {
         ...room,
-        status: isBooked ? "taken" : isSelected ? "selected" : "free",
+        status,
         bookedRanges: reservations
           .filter((r) => r.roomId === room.id)
           .map((r) => ({
@@ -159,55 +195,60 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
           })),
       };
     });
-  }, [selectedDate, reservations, selectedRooms]);
+  }, [
+    reservations,
+    selectedDate,
+    selectedPlan,
+    range,
+    selectedRoomIds,
+    getConflictingReservationsForRange,
+  ]);
 
-  // calendar dot rendering based on room occupancy
-  const dateRender = useCallback(
-    (current) => {
-      const formatted = current.format("YYYY-MM-DD");
-
-      const reservationsForDay = reservations.filter((r) =>
-        rangesOverlap(r.startDate, r.endDate, formatted, formatted)
-      );
-
-      const bookedIds = new Set(reservationsForDay.map((r) => r.roomId));
-
-      if (bookedIds.size === rooms.length)
-        return (
-          <div className="calendar-dot bg-red-500 text-white">
-            {current.date()}
-          </div>
-        );
-
-      if (bookedIds.size > 0)
-        return (
-          <div className="calendar-dot border border-orange-400 text-orange-500 font-semibold">
-            {current.date()}
-          </div>
-        );
-
-      return <div className="calendar-dot text-gray-700">{current.date()}</div>;
-    },
-    [reservations]
+  const selectedRooms = useMemo(
+    () =>
+      initialRooms.filter((room) => selectedRoomIds.includes(room.id)),
+    [selectedRoomIds]
   );
 
-  const handleRoomClick = (room) => {
-    if (!selectedDate) {
-      return message.error("Select a date first.");
+  // collect conflict details for selected rooms (for modal display)
+  const conflictDetails = useMemo(() => {
+    if (!range) return [];
+    const list = [];
+    for (const roomId of selectedRoomIds) {
+      const room = initialRooms.find((r) => r.id === roomId);
+      const conflicts = getConflictingReservationsForRange(roomId, range);
+      if (conflicts.length > 0) {
+        list.push({
+          id: roomId,
+          name: room?.name || roomId,
+          reservations: conflicts.map((r) => ({
+            startDate: r.startDate,
+            endDate: r.endDate,
+            type: r.type,
+          })),
+        });
+      }
     }
-    if (!selectedPlan) {
-      return message.error("Select a plan first.");
-    }
-    if (room.status === "taken") return;
+    return list;
+  }, [selectedRoomIds, range, getConflictingReservationsForRange]);
 
-    setSelectedRooms((prev) =>
+  const hasConflicts = conflictDetails.length > 0;
+
+  const handleRoomClick = (room) => {
+    if (!selectedDate || !selectedPlan) {
+      message.error("Select a date and plan first");
+      return;
+    }
+    if (room.status === "taken" || room.status === "disabled") return;
+
+    setSelectedRoomIds((prev) =>
       prev.includes(room.id)
         ? prev.filter((id) => id !== room.id)
         : [...prev, room.id]
     );
   };
 
-  const handleReserveClick = () => {
+  const handleOpenModal = () => {
     if (!isAuthenticated) {
       message.error("You must be logged in to reserve.");
       return;
@@ -217,44 +258,78 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
       return;
     }
     if (!selectedPlan) {
-      message.error("Select a plan first.");
+      message.error("Select a plan.");
       return;
     }
-    if (selectedRooms.length === 0) {
+    if (selectedRoomIds.length === 0) {
       message.error("Select at least one room.");
       return;
     }
-    if (!companyName.trim()) {
-      message.error("Enter company / organization name.");
-      return;
-    }
-
-    const range = computeRange(selectedPlan, selectedDate);
-    if (!range) return;
-
-    // client-side conflict check (confirmed reservations only)
-    const conflict = selectedRooms.some((roomId) =>
-      reservations.some(
-        (r) =>
-          r.roomId === roomId &&
-          rangesOverlap(r.startDate, r.endDate, range.start, range.end)
-      )
-    );
-
-    if (conflict) {
+    if (hasConflicts) {
       message.error(
-        "One or more selected rooms are already booked in that period."
+        "Some selected rooms are already booked in that period. Adjust your selection or plan."
       );
       return;
     }
+    setModalOpen(true);
+  };
 
+  const handleConfirmReserve = () => {
+    if (!range) return;
     createReservation.mutate({
-      roomIds: selectedRooms,
+      roomIds: selectedRoomIds,
       plan: selectedPlan,
       startDate: range.start,
       companyName,
     });
   };
+
+  // calendar color highlighting
+  const dateRender = useCallback(
+    (current) => {
+      const formatted = current.format("YYYY-MM-DD");
+
+      const allTaken = initialRooms.every((room) =>
+        reservations.some(
+          (r) =>
+            r.roomId === room.id &&
+            rangesOverlap(r.startDate, r.endDate, formatted, formatted)
+        )
+      );
+
+      const partiallyTaken =
+        !allTaken &&
+        reservations.some((r) =>
+          rangesOverlap(r.startDate, r.endDate, formatted, formatted)
+        );
+
+      if (allTaken) {
+        return (
+          <div className="calendar-dot bg-red-500 text-white">
+            {current.date()}
+          </div>
+        );
+      }
+      if (partiallyTaken) {
+        return (
+          <div className="calendar-dot border border-orange-400 text-orange-500 font-semibold">
+            {current.date()}
+          </div>
+        );
+      }
+      return (
+        <div className="calendar-dot text-gray-700">{current.date()}</div>
+      );
+    },
+    [reservations]
+  );
+
+  const reserveDisabled =
+    !isAuthenticated ||
+    !selectedDate ||
+    !selectedPlan ||
+    selectedRoomIds.length === 0 ||
+    hasConflicts;
 
   return (
     <div className="bg-gray-50 min-h-screen py-16 fade-in">
@@ -268,63 +343,55 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
             <Row gutter={[24, 24]}>
               {/* LEFT PANEL */}
               <Col xs={24} md={6}>
-                <div className="bg-white rounded-xl shadow-md p-5 space-y-4 card-hover flex flex-col gap-4">
+                <div className="bg-white rounded-xl shadow-md p-5 space-y-5 card-hover flex flex-col gap-5">
                   <DatePicker
                     value={selectedDate}
                     onChange={(d) => {
                       setSelectedDate(d);
-                      setSelectedRooms([]);
+                      setSelectedRoomIds([]);
+                      setSelectedPlan(null);
                     }}
-                    disabledDate={(c) => c && c < dayjs().startOf("day")}
+                    disabledDate={(current) =>
+                      current && current < dayjs().startOf("day")
+                    }
                     cellRender={dateRender}
                     className="w-full"
                     allowClear={false}
                     placeholder="Select a date"
                   />
 
+                  {/* Plan selector */}
                   <Select
                     value={selectedPlan}
                     onChange={setSelectedPlan}
+                    placeholder="Select plan"
                     disabled={!selectedDate}
-                    className="w-full"
+                    style={{ width: "100%" }}
                     options={[
                       { value: "daily", label: "Daily" },
-                      { value: "weekly", label: "Weekly (7 days)" },
+                      { value: "weekly", label: "Weekly" },
                       { value: "monthly", label: "Monthly" },
                     ]}
-                    placeholder="Select plan"
                   />
 
-                  <input
-                    type="text"
-                    className="w-full border rounded-md py-2 px-3 text-gray-700 focus:ring-2 focus:ring-orange-500"
-                    placeholder="Company / Organization"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                  />
-
-                  <Button
-                    type="primary"
-                    className="w-full bg-orange-500"
-                    onClick={handleReserveClick}
-                    disabled={
-                      !isAuthenticated ||
-                      !selectedDate ||
-                      !selectedPlan ||
-                      selectedRooms.length === 0 ||
-                      !companyName.trim()
-                    }
-                    loading={createReservation.isLoading}
-                  >
-                    Reserve (email confirmation)
-                  </Button>
-
+                  {/* Reserve button */}
                   <button
-                    onClick={() => setShowOverview((prev) => !prev)}
-                    className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm"
+                    className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={reserveDisabled}
+                    onClick={handleOpenModal}
                   >
-                    {showOverview ? "Hide Overview" : "Show Overview"}
+                    Reserve
                   </button>
+
+                  {/* Conflict alert */}
+                  {hasConflicts && range && (
+                    <Alert
+                      type="error"
+                      showIcon
+                      className="rounded-md"
+                      message="Some selected rooms are already booked in this period. Change your selection or plan."
+                    />
+                  )}
 
                   {selectedDate && (
                     <Alert
@@ -334,8 +401,9 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                           {selectedDate.format("YYYY-MM-DD")}
                           <Tag color="blue" className="ml-2">
                             {
-                              roomsWithStatus.filter((x) => x.status === "free")
-                                .length
+                              roomsWithStatus.filter(
+                                (x) => x.status === "free"
+                              ).length
                             }{" "}
                             free
                           </Tag>
@@ -362,12 +430,18 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                     />
                   )}
 
+                  <button
+                    onClick={() => setShowOverview((prev) => !prev)}
+                    className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm"
+                  >
+                    {showOverview ? "Hide Overview" : "Show Overview"}
+                  </button>
+
                   {showOverview && (
                     <div className="max-h-[480px] overflow-y-auto border-t pt-3">
                       <BookingOverview
                         reservations={reservations}
-                        rooms={rooms}
-                        showDelete={false}
+                        rooms={initialRooms}
                       />
                     </div>
                   )}
@@ -381,14 +455,31 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                     rooms={roomsWithStatus}
                     onRoomClick={handleRoomClick}
                     statusColors={{
-                      free: "#00ff00",
-                      taken: "#ff0000",
-                      selected: "#ffd400",
+                      disabled: "#d1d5db",
+                      free: "#4ade80",
+                      selected: "#facc15",
+                      taken: "#ef4444",
                     }}
                   />
                 </div>
               </Col>
             </Row>
+
+            {/* Summary / email verification modal */}
+            <ReservationModal
+              open={modalOpen}
+              onClose={() => setModalOpen(false)}
+              range={range}
+              plan={selectedPlan}
+              selectedRooms={selectedRooms}
+              userEmail={user?.email}
+              companyName={companyName}
+              onCompanyNameChange={setCompanyName}
+              hasConflicts={hasConflicts}
+              conflictDetails={conflictDetails}
+              onConfirm={handleConfirmReserve}
+              isAuthenticated={isAuthenticated}
+            />
           </div>
         </Col>
       </Row>
