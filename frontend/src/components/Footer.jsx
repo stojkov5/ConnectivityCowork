@@ -12,7 +12,7 @@ function Footer() {
       >
         {/* Left: Logo */}
         <Col xs={24} sm={8} className="footer-logo-col  mb-2 sm:mb-0">
-          <img 
+          <img
             src="/Images/Logo2.png"
             alt="Logo"
             className="footer-logo text-center"
@@ -27,34 +27,30 @@ function Footer() {
         </Col>
 
         {/* Right: Social Icons */}
-        <Col
-          xs={24}
-          sm={8}
-          className="footer-socials flex gap-4"
-        >
+        <Col xs={24} sm={8} className="footer-socials flex gap-4">
           <a
-            href="https://instagram.com"
+            href="https://www.instagram.com/cowork_konnectivity/"
             target="_blank"
             rel="noopener noreferrer"
           >
             <FaInstagram className="footer-icon" />
           </a>
           <a
-            href="https://twitter.com"
+            href="https://x.com/ckonnectiv81867?s=21"
             target="_blank"
             rel="noopener noreferrer"
           >
             <FaTwitter className="footer-icon" />
           </a>
           <a
-            href="https://linkedin.com"
+            href="https://www.linkedin.com/company/konnectivity-coworking-space/"
             target="_blank"
             rel="noopener noreferrer"
           >
             <FaLinkedin className="footer-icon" />
           </a>
           <a
-            href="https://facebook.com"
+            href="https://www.facebook.com/coworkonnectivity"
             target="_blank"
             rel="noopener noreferrer"
           >
