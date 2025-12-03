@@ -7,5 +7,150 @@
     "dashboard": "TABLEAU DE BORD",
     "login": "CONNEXION",
     "logout": "DÉCONNEXION"
+  },
+  "landing": {
+    "heroTitleLine1": "Coworking au",
+    "heroTitleHighlight": "cœur de Skopje",
+    "heroSubtitle": "Votre espace de travail chaleureux : abordable, calme et entouré par les attractions du centre-ville.",
+    "heroCta": "RÉSERVER"
+  },
+  "intro": {
+    "title": "BIENVENUE",
+    "brand": "Cowork Konnectivity",
+    "p1": "{{brand}} est votre passerelle vers un réseau en expansion d’espaces de coworking et de bureaux à Skopje, Macédoine. Nos espaces au centre-ville et à Kisela Voda sont des centres de créativité et de productivité, où entrepreneurs, startups et entreprises établies prospèrent ensemble.",
+    "p2": "Chez {{brand}}, nous croyons qu’un environnement inspirant est essentiel pour réussir. Nous offrons une gamme de services et des options d’adhésion flexibles adaptées à l’évolution de vos besoins. Que vous débutiez ou que vous cherchiez à améliorer votre espace de travail, vous trouverez une communauté solidaire et un lieu qui stimule l’innovation.",
+    "p3": "Rejoignez-nous là où la flexibilité rencontre l’inspiration, et laissez votre activité s’épanouir dans l’un de nos espaces magnifiquement conçus."
+  },
+  "slider": {
+    "designatedDesk": "Bureau attitré",
+    "access24": "Accès 24h/24",
+    "centralLocation": "Emplacement central",
+    "fiberInternet": "Internet fibre",
+    "quietRoom": "Salle silencieuse pour appels",
+    "freeCoffee": "Café offert"
+  },
+  "community": {
+    "title": "NOTRE COMMUNAUTÉ",
+    "p1": "Nous croyons en offrir plus qu’un simple espace de travail – nous construisons une communauté qui encourage la collaboration, la créativité et la croissance. Que vous soyez solopreneur, freelance ou une équipe en pleine expansion, Konnectivity Coworking Space a une solution adaptée.",
+    "p2": "Pour profiter de cette offre exclusive ou pour en savoir plus sur nos options d’adhésion, veuillez contacter notre équipe à {{email}}. Nous serions ravis de répondre à vos questions et de vous accompagner dans le processus d’inscription."
+  },
+  "plans": {
+    "title": "FORMULES",
+    "loading": "Chargement des derniers tarifs...",
+    "viewDetails": "VOIR LES DÉTAILS",
+
+    "daily": {
+      "title": "ACCÈS JOURNALIER",
+      "price": "600 MKD / par jour"
+    },
+    "weekly": {
+      "title": "ACCÈS HEBDOMADAIRE",
+      "price": "3500 MKD / par semaine"
+    },
+    "monthly": {
+      "title": "ACCÈS MENSUEL",
+      "price": "11000 MKD / par mois"
+    },
+    "meeting": {
+      "title": "SALLE DE RÉUNION",
+      "price": "3000 MKD / 4h • 6000 MKD / 8h"
+    }
+  },
+  "coffee": {
+    "title": "NOUS FAISONS EN SORTE QUE VOUS NE MANQUIEZ JAMAIS DE CARBURANT",
+    "p1": "Nous savons que le quotidien peut être difficile, et parfois tout ce qu’il vous faut, c’est une bonne tasse de café pour continuer. Vous pouvez préparer votre café idéal, que vous aimiez un espresso corsé ou un latte onctueux. Nous sommes fiers de garantir que votre dose de caféine est toujours à portée de main.",
+    "alt": "Station de café"
+  },
+  "features": {
+    "title": "NOS AVANTAGES",
+    "designatedDesk": "Bureau attitré",
+    "access24": "Accès 24h/24",
+    "centralLocation": "Emplacement central",
+    "fiberInternet": "Internet fibre",
+    "quietRoom": "Salle silencieuse pour appels",
+    "freeCoffee": "Café offert"
+  },
+  "locations": {
+    "title": "EMPLACEMENTS",
+    "subtitle": "Deux emplacements, adaptés aux besoins de chaque professionnel",
+    "kiselaVoda": "KISELA VODA",
+    "centar": "CENTAR",
+    "kiselaAlt": "Espace de travail Kisela Voda",
+    "centarAlt": "Espace de travail Centar"
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "emailLabel": "Email :",
+    "emailValue": "contact@coworkonnectivity.com",
+    "phoneLabel": "Numéro de téléphone :",
+    "phoneValue": "+389 70 123 456",
+    "locationLabel": "Emplacement :",
+    "location1": "Centar - Skopje",
+    "location2": "Kisela Voda - Skopje",
+    "carouselAlt": "Intérieur de l’espace de coworking"
+  },
+  "officeDetails": {
+    "title": "DÉTAILS DES BUREAUX",
+    "subtitle": "Choisissez entre les deux emplacements ci-dessous",
+    "kisela": "KISELA VODA",
+    "centar": "CENTAR",
+    "kiselaAlt": "Espace de travail Kisela Voda",
+    "centarAlt": "Espace de travail Centar"
+  },
+  "typeOfBooking": {
+    "title": "Connectivity – Tarifs coworking",
+    "subtitle": "Choisissez l’option de réservation qui correspond à votre façon de travailler :",
+
+    "daily": {
+      "title": "ACCÈS JOURNALIER",
+      "description": "Solution flexible pour une journée.",
+      "price": "600 MKD / par jour",
+      "details": [
+        "Espace de travail flexible adapté à vos besoins.",
+        "Internet haut débit et réseau sécurisé.",
+        "Accès aux salles de réunion et aux espaces d’événements.",
+        "Café et boissons rafraîchissantes offerts.",
+        "Accès 24h/24 pour booster votre productivité."
+      ]
+    },
+
+    "weekly": {
+      "title": "ACCÈS HEBDOMADAIRE",
+      "description": "7 entrées flexibles réparties sur le mois.",
+      "price": "3500 MKD / par semaine",
+      "details": [
+        "Espace de travail flexible pour votre rythme hebdomadaire.",
+        "Événements de networking et opportunités de développement.",
+        "Accès à l’imprimante et aux fournitures.",
+        "Mobilier ergonomique.",
+        "Casier privé."
+      ]
+    },
+
+    "monthly": {
+      "title": "ACCÈS MENSUEL",
+      "description": "Accès complet au coworking pendant un mois.",
+      "price": "11000 MKD / par mois",
+      "details": [
+        "Accès illimité au coworking.",
+        "Toutes les commodités incluses.",
+        "Accès 24h/24.",
+        "Communauté bienveillante et solidaire.",
+        "Salles de réunion privées."
+      ]
+    },
+
+    "meeting": {
+      "title": "SALLE DE RÉUNION",
+      "description": "Environnement professionnel pour réunions (10–15 personnes).",
+      "price": "3000 MKD / 4h • 6000 MKD / 8h",
+      "details": [
+        "Écran de présentation et HDMI.",
+        "Tableau blanc et marqueurs.",
+        "Connexion Wi-Fi.",
+        "Café/thé inclus.",
+        "Parking privé disponible."
+      ]
+    }
   }
 }

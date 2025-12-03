@@ -5,36 +5,45 @@ import {
   MapPinCheck,
   Wifi,
   MicOff,
-  Coffee,
+  Coffee
 } from "lucide-react";
 import { motion } from "framer-motion";
 import "../../styles/Features.css";
 import { Row, Col } from "antd";
-
-const features = [
-  {
-    icon: <Monitor className="w-10 h-10 feature-icon" />,
-    text: "Designated Desk",
-  },
-  { icon: <Clock2 className="w-10 h-10 feature-icon" />, text: "24/h Access" },
-  {
-    icon: <MapPinCheck className="w-10 h-10 feature-icon" />,
-    text: "Central Location",
-  },
-  { icon: <Wifi className="w-10 h-10 feature-icon" />, text: "Fiber Internet" },
-  {
-    icon: <MicOff className="w-10 h-10 feature-icon" />,
-    text: "Quiet Room for Calls",
-  },
-  {
-    icon: <Coffee className="w-10 h-10 feature-icon" />,
-    text: "Complimentary Coffee",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 const Features = () => {
+  const { t } = useTranslation();
+
+  const features = [
+    {
+      icon: <Monitor className="w-10 h-10 feature-icon" />,
+      text: t("features.designatedDesk")
+    },
+    {
+      icon: <Clock2 className="w-10 h-10 feature-icon" />,
+      text: t("features.access24")
+    },
+    {
+      icon: <MapPinCheck className="w-10 h-10 feature-icon" />,
+      text: t("features.centralLocation")
+    },
+    {
+      icon: <Wifi className="w-10 h-10 feature-icon" />,
+      text: t("features.fiberInternet")
+    },
+    {
+      icon: <MicOff className="w-10 h-10 feature-icon" />,
+      text: t("features.quietRoom")
+    },
+    {
+      icon: <Coffee className="w-10 h-10 feature-icon" />,
+      text: t("features.freeCoffee")
+    }
+  ];
+
   return (
-    <section id="features" className=" py-5 raleway-300">
+    <section id="features" className="py-5 raleway-300">
       <Row
         justify="center"
         align="middle"
@@ -48,20 +57,20 @@ const Features = () => {
             className="features-card"
           >
             <h2 className="features-title text-4xl md:text-5xl font-semibold mb-12 tracking-wide raleway-600">
-              OUR FEATURES
+              {t("features.title")}
             </h2>
 
             <Row
-              justify={"center"}
-              gutter={[16, 16]} // replaces gap-x-8 (32px) and gap-y-12 (48px)
-              className="features-grid mx-auto "
+              justify="center"
+              gutter={[16, 16]}
+              className="features-grid mx-auto"
             >
               {features.map((feature, index) => (
                 <Col
                   key={index}
-                  xs={24} // 1 column on mobile
-                  sm={12} // 2 columns on small screens
-                  md={8} // 3 columns on medium and up
+                  xs={24}
+                  sm={12}
+                  md={8}
                 >
                   <motion.div
                     initial={{ opacity: 0, y: 30 }}

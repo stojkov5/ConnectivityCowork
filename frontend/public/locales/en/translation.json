@@ -7,5 +7,150 @@
     "dashboard": "DASHBOARD",
     "login": "LOGIN",
     "logout": "LOGOUT"
+  },
+  "landing": {
+    "heroTitleLine1": "Co-Working in the",
+    "heroTitleHighlight": "heart of Skopje",
+    "heroSubtitle": "Your cozy workplace: Affordable, quiet, and surrounded by downtown delights.",
+    "heroCta": "BOOK NOW"
+  },
+  "intro": {
+    "title": "WELCOME",
+    "brand": "Cowork Konnectivity",
+    "p1": "{{brand}} is your gateway to a network of expanding coworking and office spaces in Skopje, Macedonia. Our spaces in the city center and Kisela Voda are hubs of creativity and productivity, where entrepreneurs, startups, and established companies come together to thrive.",
+    "p2": "At {{brand}}, we believe that an inspiring environment is key to success. We offer a range of amenities and flexible membership options tailored to meet your evolving needs. Whether you're just starting out or looking to upgrade your workspace, you'll find a supportive community and a space that sparks innovation.",
+    "p3": "Join us where flexibility meets inspiration, and let your business flourish in one of our beautifully designed spaces."
+  },
+  "slider": {
+    "designatedDesk": "Designated Desk",
+    "access24": "24/h Access",
+    "centralLocation": "Central Location",
+    "fiberInternet": "Fiber Internet",
+    "quietRoom": "Quiet Room for Calls",
+    "freeCoffee": "Complimentary Coffee"
+  },
+  "community": {
+    "title": "OUR COMMUNITY",
+    "p1": "We believe in providing value beyond workspace – we're building a community that fosters collaboration, creativity, and growth. Whether you're a solopreneur, freelancer, or a growing team, Konnectivity Coworking Space has a solution that fits.",
+    "p2": "To take advantage of this exclusive offer or to learn more about our membership options, please contact our team at {{email}}. We would be delighted to answer any questions and guide you through the enrollment process."
+  },
+  "plans": {
+    "title": "PLANS",
+    "loading": "Loading latest prices...",
+    "viewDetails": "VIEW DETAILS",
+
+    "daily": {
+      "title": "DAILY ACCESS",
+      "price": "600 MKD / per day"
+    },
+    "weekly": {
+      "title": "WEEKLY ACCESS",
+      "price": "3500 MKD / per week"
+    },
+    "monthly": {
+      "title": "MONTHLY ACCESS",
+      "price": "11000 MKD / per month"
+    },
+    "meeting": {
+      "title": "MEETING ROOM",
+      "price": "3000 MKD / 4h • 6000 MKD / 8h"
+    }
+  },
+  "coffee": {
+    "title": "WE MAKE SURE YOU NEVER RUN OUT OF FUEL",
+    "p1": "We understand that the daily grind can be tough, and sometimes all you need is a delicious cup of coffee to keep you going. You can craft your perfect brew, whether you prefer a bold espresso shot or a creamy latte. We take pride in ensuring that your caffeine fix is always within reach.",
+    "alt": "Coffee station"
+  },
+  "features": {
+    "title": "OUR FEATURES",
+    "designatedDesk": "Designated Desk",
+    "access24": "24/h Access",
+    "centralLocation": "Central Location",
+    "fiberInternet": "Fiber Internet",
+    "quietRoom": "Quiet Room for Calls",
+    "freeCoffee": "Complimentary Coffee"
+  },
+  "locations": {
+    "title": "LOCATIONS",
+    "subtitle": "Two locations, tailored for any professional’s needs",
+    "kiselaVoda": "KISELA VODA",
+    "centar": "CENTAR",
+    "kiselaAlt": "Kisela Voda Workspace",
+    "centarAlt": "Centar Workspace"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "emailLabel": "Email:",
+    "emailValue": "contact@coworkonnectivity.com",
+    "phoneLabel": "Phone Number:",
+    "phoneValue": "+389 70 123 456",
+    "locationLabel": "Location:",
+    "location1": "Centar - Skopje",
+    "location2": "Kisela Voda - Skopje",
+    "carouselAlt": "Coworking space interior"
+  },
+  "officeDetails": {
+    "title": "OFFICE DETAILS",
+    "subtitle": "Choose between the two locations down below",
+    "kisela": "KISELA VODA",
+    "centar": "CENTAR",
+    "kiselaAlt": "Kisela Voda Workspace",
+    "centarAlt": "Centar Workspace"
+  },
+  "typeOfBooking": {
+    "title": "Connectivity – Cowork Pricing",
+    "subtitle": "Choose the booking option that fits your work style:",
+
+    "daily": {
+      "title": "DAILY ACCESS",
+      "description": "Flexible solution for one day.",
+      "price": "600 MKD / per day",
+      "details": [
+        "Flexible workspace solutions tailored to your needs.",
+        "High-speed internet and secure network access.",
+        "Access to meeting rooms and event spaces.",
+        "Free coffee and refreshing beverages.",
+        "24/7 access to boost productivity."
+      ]
+    },
+
+    "weekly": {
+      "title": "WEEKLY ACCESS",
+      "description": "7 flexible daily entries during the month.",
+      "price": "3500 MKD / per week",
+      "details": [
+        "Flexible workspace for your weekly schedule.",
+        "Networking events and development opportunities.",
+        "Access to printer and supplies.",
+        "Ergonomic furniture.",
+        "Private locker."
+      ]
+    },
+
+    "monthly": {
+      "title": "MONTHLY ACCESS",
+      "description": "Full coworking access for a month.",
+      "price": "11000 MKD / per month",
+      "details": [
+        "Unlimited coworking access.",
+        "All amenities included.",
+        "24/7 entry.",
+        "Community support.",
+        "Private meeting rooms."
+      ]
+    },
+
+    "meeting": {
+      "title": "MEETING ROOM",
+      "description": "Professional meeting environment (10–15 people).",
+      "price": "3000 MKD / 4h • 6000 MKD / 8h",
+      "details": [
+        "Presentation screen & HDMI.",
+        "Whiteboard & markers.",
+        "Wi-Fi connection.",
+        "Coffee/tea included.",
+        "Private parking available."
+      ]
+    }
   }
 }

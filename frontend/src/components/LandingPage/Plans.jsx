@@ -3,57 +3,60 @@ import {
   CalendarOutlined,
   ClockCircleOutlined,
   TeamOutlined,
-  CoffeeOutlined,
+  CoffeeOutlined
 } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import "../../styles/Plans.css";
+import { useTranslation } from "react-i18next";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const iconByKey = {
-  daily: <CalendarOutlined />,
-  weekly: <ClockCircleOutlined />,
-  monthly: <TeamOutlined />,
-  meeting: <CoffeeOutlined />,
-};
-
-// Fallback data if API fails or collection is empty
-const fallbackCardData = [
-  {
-    key: "daily",
-    title: "DAILY ACCESS",
-    price: "600 MKD / per day",
-    color: "#ff8c00",
-  },
-  {
-    key: "weekly",
-    title: "WEEKLY ACCESS",
-    price: "3500 MKD / per week",
-    color: "#ffb84d",
-  },
-  {
-    key: "monthly",
-    title: "MONTHLY ACCESS",
-    price: "11000 MKD / per month",
-    color: "#ff8c00",
-  },
-  {
-    key: "meeting",
-    title: "MEETING ROOM",
-    price: "3000 MKD / 4h • 6000 MKD / 8h",
-    color: "#ff8c00",
-  },
-];
-
 const Plans = () => {
+  const { t } = useTranslation();
+
+  const iconByKey = {
+    daily: <CalendarOutlined />,
+    weekly: <ClockCircleOutlined />,
+    monthly: <TeamOutlined />,
+    meeting: <CoffeeOutlined />
+  };
+
+  // Fallback data (translated through i18n)
+  const fallbackCardData = [
+    {
+      key: "daily",
+      title: t("plans.daily.title"),
+      price: t("plans.daily.price"),
+      color: "#ff8c00"
+    },
+    {
+      key: "weekly",
+      title: t("plans.weekly.title"),
+      price: t("plans.weekly.price"),
+      color: "#ffb84d"
+    },
+    {
+      key: "monthly",
+      title: t("plans.monthly.title"),
+      price: t("plans.monthly.price"),
+      color: "#ff8c00"
+    },
+    {
+      key: "meeting",
+      title: t("plans.meeting.title"),
+      price: t("plans.meeting.price"),
+      color: "#ff8c00"
+    }
+  ];
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["plans"],
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/api/plans`);
       return res.data.plans;
-    },
+    }
   });
 
   const plans =
@@ -65,10 +68,10 @@ const Plans = () => {
     <div className="booking-container container mx-auto py-5">
       <div className="booking-header">
         <h2 className="text-4xl md:text-5xl font-semibold mb-6 tracking-wide raleway-600">
-          PLANS
+          {t("plans.title")}
         </h2>
         {isLoading && (
-          <p className="text-gray-500 text-sm">Loading latest prices...</p>
+          <p className="text-gray-500 text-sm">{t("plans.loading")}</p>
         )}
       </div>
 
@@ -76,13 +79,7 @@ const Plans = () => {
         <Col span={22}>
           <Row gutter={[16, 16]} justify="center">
             {plans.map((plan) => (
-              <Col
-                xs={24}
-                sm={12}
-                md={12}
-                lg={6}
-                key={plan.key || plan.title}
-              >
+              <Col xs={24} sm={12} md={12} lg={6} key={plan.key || plan.title}>
                 <div className="booking-card">
                   <div className="card-content">
                     <div
@@ -92,9 +89,7 @@ const Plans = () => {
                       {iconByKey[plan.key] || <CalendarOutlined />}
                     </div>
 
-                    <h3 className="raleway-600">
-                      {plan.title || "PLAN"}
-                    </h3>
+                    <h3 className="raleway-600">{plan.title}</h3>
 
                     <h2 className="booking-price raleway-600 pb-3">
                       {plan.price}
@@ -104,7 +99,7 @@ const Plans = () => {
                       to="/officedetails"
                       className="booking-button rounded-full p-3"
                     >
-                      <button>VIEW DETAILS</button>
+                      <button>{t("plans.viewDetails")}</button>
                     </Link>
                   </div>
                 </div>

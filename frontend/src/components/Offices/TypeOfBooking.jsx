@@ -3,16 +3,19 @@ import {
   CalendarOutlined,
   ClockCircleOutlined,
   TeamOutlined,
-  CoffeeOutlined,
+  CoffeeOutlined
 } from "@ant-design/icons";
 import "../../styles/TypeOfBooking.css";
 
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const TypeOfBooking = () => {
+  const { t } = useTranslation();
+
   // Fetch plans from backend (same data that admin edits)
   const { data: plans } = useQuery({
     queryKey: ["plans"],
@@ -20,71 +23,47 @@ const TypeOfBooking = () => {
       const res = await axios.get(`${API_URL}/api/plans`);
       // expected: { plans: [ { _id, key, title, price } ] }
       return res.data.plans || [];
-    },
+    }
   });
 
-  // Local static meta; price comes from DB when available
+  // Local static meta; title/description/price/details come from i18n
   const cardData = [
     {
       key: "daily",
-      title: "DAILY ACCESS",
+      title: t("typeOfBooking.daily.title"),
       icon: <CalendarOutlined />,
-      description: "Flexible solution for one day.",
-      defaultPrice: "600 MKD / per day",
+      description: t("typeOfBooking.daily.description"),
+      defaultPrice: t("typeOfBooking.daily.price"),
       color: "#ff8c00",
-      details: [
-        "Flexible workspace solutions tailored to your needs.",
-        "High-speed internet and secure network access.",
-        "Access to meeting rooms and event spaces.",
-        "Free coffee and refreshing beverages.",
-        "24/7 access to boost productivity.",
-      ],
+      details: t("typeOfBooking.daily.details", { returnObjects: true })
     },
     {
       key: "weekly",
-      title: "WEEKLY ACCESS",
+      title: t("typeOfBooking.weekly.title"),
       icon: <ClockCircleOutlined />,
-      description: "7 flexible daily entries during the month.",
-      defaultPrice: "3500 MKD / per week",
+      description: t("typeOfBooking.weekly.description"),
+      defaultPrice: t("typeOfBooking.weekly.price"),
       color: "#ffb84d",
-      details: [
-        "Flexible workspace for your weekly schedule.",
-        "Networking events and development opportunities.",
-        "Access to printer and supplies.",
-        "Ergonomic furniture.",
-        "Private locker.",
-      ],
+      details: t("typeOfBooking.weekly.details", { returnObjects: true })
     },
     {
       key: "monthly",
-      title: "MONTHLY ACCESS",
+      title: t("typeOfBooking.monthly.title"),
       icon: <TeamOutlined />,
-      description: "Full coworking access for a month.",
-      defaultPrice: "11000 MKD / per month",
+      description: t("typeOfBooking.monthly.description"),
+      defaultPrice: t("typeOfBooking.monthly.price"),
       color: "#ff8c00",
-      details: [
-        "Unlimited coworking access.",
-        "All amenities included.",
-        "24/7 entry.",
-        "Community support.",
-        "Private meeting rooms.",
-      ],
+      details: t("typeOfBooking.monthly.details", { returnObjects: true })
     },
     {
       key: "meeting",
-      title: "MEETING ROOM",
+      title: t("typeOfBooking.meeting.title"),
       icon: <CoffeeOutlined />,
-      description: "Professional meeting environment (10–15 people).",
-      defaultPrice: "3000 MKD / 4h • 6000 MKD / 8h",
+      description: t("typeOfBooking.meeting.description"),
+      defaultPrice: t("typeOfBooking.meeting.price"),
       color: "#ff8c00",
-      details: [
-        "Presentation screen & HDMI.",
-        "Whiteboard & markers.",
-        "Wi-Fi connection.",
-        "Coffee/tea included.",
-        "Private parking available.",
-      ],
-    },
+      details: t("typeOfBooking.meeting.details", { returnObjects: true })
+    }
   ];
 
   const getPrice = (card) => {
@@ -98,10 +77,8 @@ const TypeOfBooking = () => {
   return (
     <div className="booking-container container mx-auto">
       <div className="booking-header">
-        <h1 className="raleway-600">Connectivity – Cowork Pricing</h1>
-        <p className="raleway-300">
-          Choose the booking option that fits your work style:
-        </p>
+        <h1 className="raleway-600">{t("typeOfBooking.title")}</h1>
+        <p className="raleway-300">{t("typeOfBooking.subtitle")}</p>
       </div>
 
       <Row gutter={[16, 16]} justify="center">
@@ -114,9 +91,10 @@ const TypeOfBooking = () => {
                     <div className="icon" style={{ color: card.color }}>
                       {card.icon}
                     </div>
+
                     <h3 className="raleway-600">{card.title}</h3>
 
-                    {/* ✅ Custom Tag */}
+                    {/* Custom Tag */}
                     <span
                       className="custom-tag raleway-300"
                       style={{ backgroundColor: card.color }}

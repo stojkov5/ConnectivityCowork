@@ -3,8 +3,11 @@ import { Row, Col } from "antd";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import "../../styles/Locations.css";
+import { useTranslation } from "react-i18next";
 
 const Locations = () => {
+  const { t } = useTranslation();
+
   return (
     <section id="locations" className="location-section relative py-5">
       {/* soft dark overlay */}
@@ -15,9 +18,9 @@ const Locations = () => {
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="location-title text-4xl md:text-5xl font-semibold mb-4 tracking-wide raleway-600 "
+          className="location-title text-4xl md:text-5xl font-semibold mb-4 tracking-wide raleway-600"
         >
-          LOCATIONS
+          {t("locations.title")}
         </motion.h2>
 
         <motion.p
@@ -26,10 +29,9 @@ const Locations = () => {
           transition={{ duration: 0.9, ease: "easeOut" }}
           className="location-subtitle text-xl md:text-2xl text-white/90 mb-12 inline-block px-6 py-3 rounded-2xl backdrop-blur-md bg-orange-500/85 font-medium"
         >
-          Two locations, tailored for any professional’s needs
+          {t("locations.subtitle")}
         </motion.p>
 
-        {/* Centered Row of Cards */}
         <Row gutter={[32, 32]} justify="center" align="middle">
           {/* Kisela Voda */}
           <Col xs={24} md={10} className="location-col">
@@ -42,11 +44,11 @@ const Locations = () => {
               <Link to="/officedetails" className="location-link">
                 <img
                   src="/Images/Location/KiselaVoda.webp"
-                  alt="Kisela Voda"
+                  alt={t("locations.kiselaAlt")}
                   className="location-img"
                 />
                 <div className="location-label">
-                  <span>KISELA VODA</span>
+                  <span>{t("locations.kiselaVoda")}</span>
                 </div>
               </Link>
             </motion.div>
@@ -63,11 +65,11 @@ const Locations = () => {
               <Link to="/officedetails" className="location-link">
                 <img
                   src="/Images/Location/Centar.webp"
-                  alt="Centar"
+                  alt={t("locations.centarAlt")}
                   className="location-img"
                 />
                 <div className="location-label">
-                  <span>CENTAR</span>
+                  <span>{t("locations.centar")}</span>
                 </div>
               </Link>
             </motion.div>
