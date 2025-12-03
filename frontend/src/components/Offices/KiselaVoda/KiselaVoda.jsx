@@ -7,7 +7,6 @@ import {
   Tag,
   message,
   Select,
-  Button,
 } from "antd";
 import dayjs from "dayjs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -72,6 +71,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
   const [companyName, setCompanyName] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
 
+  // ======= FETCH CONFIRMED RESERVATIONS FOR KISELA VODA =======
   const { data: reservations = [] } = useQuery({
     queryKey: ["reservations", "kiselavoda"],
     queryFn: async () => {
@@ -93,10 +93,12 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     },
   });
 
-  const createReservation = useMutation({
+  // ======= REQUEST RESERVATION (EMAIL VERIFICATION) =======
+  const requestReservation = useMutation({
     mutationFn: async ({ roomIds, plan, startDate, companyName }) => {
+      // NOTE: using /request – same verification flow as Center
       return axios.post(
-        `${API_URL}/api/reservations`,
+        `${API_URL}/api/reservations/request`,
         {
           location: "kiselavoda",
           officeId: "kiselavoda",
@@ -113,8 +115,11 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
         }
       );
     },
-    onSuccess: () => {
-      message.success("Reservation(s) created.");
+    onSuccess: (res) => {
+      message.success(
+        res.data?.message ||
+          "Reservation request created. Please check your email to confirm."
+      );
       queryClient.invalidateQueries(["reservations", "kiselavoda"]);
       setSelectedRoomIds([]);
       setSelectedPlan(null);
@@ -146,6 +151,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     [reservations]
   );
 
+  // ======= ROOMS WITH STATUS (disabled / free / selected / taken) =======
   const rooms = useMemo(() => {
     if (!selectedDate || !selectedPlan) {
       return initialRooms.map((room) => ({
@@ -208,6 +214,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     );
   };
 
+  // ======= CONFLICT DETAILS FOR MODAL =======
   const conflictDetails = useMemo(() => {
     if (!range) return [];
     const list = [];
@@ -259,7 +266,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
 
   const handleConfirmReserve = () => {
     if (!range) return;
-    createReservation.mutate({
+    requestReservation.mutate({
       roomIds: selectedRoomIds,
       plan: selectedPlan,
       startDate: range.start,
@@ -328,7 +335,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
             <Row gutter={[24, 24]}>
               {/* LEFT PANEL */}
               <Col xs={24} md={6}>
-                <div className="bg-white rounded-xl shadow-md p-5 space-y-5 card-hover flex flex-col  gap-5">
+                <div className="bg-white rounded-xl shadow-md p-5 space-y-5 card-hover flex flex-col gap-5">
                   <DatePicker
                     value={selectedDate}
                     onChange={(d) => {
@@ -362,7 +369,6 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                   {/* Reserve button */}
                   <button
                     className="w-full bg-orange-500 text-white rounded-md py-2 font-medium hover:bg-orange-600 transition duration-300"
-                    block
                     disabled={reserveDisabled}
                     onClick={handleOpenModal}
                   >
