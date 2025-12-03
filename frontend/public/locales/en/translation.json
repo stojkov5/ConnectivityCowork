@@ -1,0 +1,11 @@
+{
+  "nav": {
+    "home": "HOME",
+    "community": "COMMUNITY",
+    "contact": "CONTACT",
+    "spaces": "SPACES",
+    "dashboard": "DASHBOARD",
+    "login": "LOGIN",
+    "logout": "LOGOUT"
+  }
+}

@@ -1,12 +1,9 @@
-// FloorPlan.jsx
+// src/components/Offices/Center/FloorPlan.jsx
 import React from "react";
 
 const FloorPlan = React.memo(
   ({ office, seats = [], onSeatClick, statusColors = {} }) => {
     if (!office) return null;
-
-    const getFill = (status) =>
-      statusColors[status] || statusColors.default || "#d1d5db";
 
     return (
       <div
@@ -46,25 +43,22 @@ const FloorPlan = React.memo(
             <path
               key={`${office.id}-${seat.id}`}
               d={office.getPathD(seat.id)}
-              fill={getFill(seat.status)}
+              fill={
+                statusColors[seat.status] ||
+                statusColors.free ||
+                "#cccccc"
+              }
               fillOpacity="0.5"
-              onClick={() => {
-                if (
-                  seat.status === "free" ||
-                  seat.status === "selected"
-                ) {
-                  onSeatClick({
-                    ...seat,
-                    officeId: office.id,
-                    officeName: office.name,
-                  });
-                }
-              }}
+              onClick={() =>
+                seat.status !== "taken" &&
+                onSeatClick({
+                  ...seat,
+                  officeId: office.id,
+                  officeName: office.name,
+                })
+              }
               style={{
-                cursor:
-                  seat.status === "free" || seat.status === "selected"
-                    ? "pointer"
-                    : "not-allowed",
+                cursor: seat.status === "taken" ? "not-allowed" : "pointer",
                 transition: "fill 0.3s ease",
               }}
               onMouseEnter={(e) => (e.target.style.fillOpacity = "0.7")}

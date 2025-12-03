@@ -4,53 +4,74 @@ import { FiMenu, FiX } from "react-icons/fi";
 import { Row, Col } from "antd";
 import { HashLink } from "react-router-hash-link";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useTranslation } from "react-i18next";
+
+const LANGUAGES = [
+  { code: "en", label: "EN" },
+  { code: "fr", label: "FR" },
+  { code: "ru", label: "RU" },
+  { code: "mk", label: "MK" }
+];
 
 const NavBar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+
   const { isLoggedIn, user, logout } = useAuth();
+  const { t, i18n } = useTranslation();
 
   const toggleMenu = () => setMenuOpen((prev) => !prev);
+  const toggleLangMenu = () => setLangMenuOpen((prev) => !prev);
 
   const handleLogout = () => {
     logout();
   };
 
-  const renderDesktopNavLink = (to, label, isHash = false) => {
-  const base =
-    "group relative tracking-[0.12em] text-[15px] xl:text-[16px] font-semibold transition-colors duration-200 hover:text-[#ff8c00]";
+  const handleLanguageChange = (langCode) => {
+    i18n.changeLanguage(langCode);
+    setLangMenuOpen(false);
+  };
 
-  const underline =
-    "pointer-events-none absolute left-0 -bottom-0.5 h-[2px] w-0 bg-[#ff8c00] transition-all duration-300 group-hover:w-full";
+  const currentLang =
+    i18n.resolvedLanguage || i18n.language || "en";
 
-  if (isHash) {
+  const renderDesktopNavLink = (to, labelKey, isHash = false) => {
+    const base =
+      "group relative tracking-[0.12em] text-[15px] xl:text-[16px] font-semibold transition-colors duration-200 hover:text-[#ff8c00]";
+
+    const underline =
+      "pointer-events-none absolute left-0 -bottom-0.5 h-[2px] w-0 bg-[#ff8c00] transition-all duration-300 group-hover:w-full";
+
+    const label = t(labelKey);
+
+    if (isHash) {
+      return (
+        <HashLink smooth to={to} className={base}>
+          <span className="relative inline-block pb-1">
+            {label}
+            <span className={underline} />
+          </span>
+        </HashLink>
+      );
+    }
+
     return (
-      <HashLink smooth to={to} className={base}>
+      <NavLink
+        to={to}
+        className={({ isActive }) =>
+          [
+            base,
+            isActive ? "text-[#ff8c00]" : ""
+          ].join(" ")
+        }
+      >
         <span className="relative inline-block pb-1">
           {label}
           <span className={underline} />
         </span>
-      </HashLink>
+      </NavLink>
     );
-  }
-
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        [
-          base,
-          isActive ? "text-[#ff8c00]" : "",
-        ].join(" ")
-      }
-    >
-      <span className="relative inline-block pb-1">
-        {label}
-        <span className={underline} />
-      </span>
-    </NavLink>
-  );
-};
-
+  };
 
   return (
     <>
@@ -80,21 +101,21 @@ const NavBar = () => {
             <Col lg={14} className="hidden lg:block">
               <ul className="flex justify-center items-center gap-6 xl:gap-8 text-black">
                 <li className="group">
-                  {renderDesktopNavLink("/#welcome", "HOME", true)}
+                  {renderDesktopNavLink("/#welcome", "nav.home", true)}
                 </li>
                 <li className="group">
-                  {renderDesktopNavLink("/#community", "COMMUNITY", true)}
+                  {renderDesktopNavLink("/#community", "nav.community", true)}
                 </li>
                 <li className="group">
-                  {renderDesktopNavLink("/contact", "CONTACT")}
+                  {renderDesktopNavLink("/contact", "nav.contact")}
                 </li>
                 <li className="group">
-                  {renderDesktopNavLink("/officedetails", "SPACES")}
+                  {renderDesktopNavLink("/officedetails", "nav.spaces")}
                 </li>
 
                 {user?.isAdmin && (
                   <li className="group">
-                    {renderDesktopNavLink("/admin", "DASHBOARD")}
+                    {renderDesktopNavLink("/admin", "nav.dashboard")}
                   </li>
                 )}
               </ul>
@@ -103,14 +124,14 @@ const NavBar = () => {
             {/* Desktop Right Side (Login + Language) & Mobile Hamburger */}
             <Col xs={12} lg={6}>
               <div className="flex justify-end items-center gap-3">
-                {/* DESKTOP login/logout */}
-                <div className="hidden lg:flex items-center gap-3">
+                {/* DESKTOP login/logout + language */}
+                <div className="hidden lg:flex items-center gap-3 relative">
                   {!isLoggedIn && (
                     <NavLink
                       to="/login"
-                      className="login-button font-semibold text-[15px] xl:text-[16px]  hover:text-[#ff8c00] transition-all duration-200"
+                      className="login-button font-semibold text-[15px] xl:text-[16px] hover:text-[#ff8c00] transition-all duration-200"
                     >
-                      LOGIN
+                      {t("nav.login")}
                     </NavLink>
                   )}
 
@@ -119,14 +140,38 @@ const NavBar = () => {
                       className="text-[15px] xl:text-[16px] font-semibold hover:text-[#ff8c00] transition-colors duration-200"
                       onClick={handleLogout}
                     >
-                      LOGOUT
+                      {t("nav.logout")}
                     </button>
                   )}
 
-                  {/* DESKTOP Language */}
-                  <button className="bg-[#ff8c00] text-white px-4 py-1.5 rounded-full text-[13px] xl:text-[14px] font-semibold shadow-md hover:bg-[#ff9f2c] transition-colors duration-200">
-                    EN / MK
-                  </button>
+                  {/* DESKTOP Language dropdown */}
+                  <div className="relative">
+                    <button
+                      className="bg-[#ff8c00] text-white px-4 py-1.5 rounded-full text-[13px] xl:text-[14px] font-semibold shadow-md hover:bg-[#ff9f2c] transition-colors duration-200 flex items-center gap-1"
+                      onClick={toggleLangMenu}
+                      type="button"
+                    >
+                      {currentLang.toUpperCase()}
+                      <span className="text-[10px]">▼</span>
+                    </button>
+
+                    {langMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-28 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
+                        {LANGUAGES.map((lng) => (
+                          <button
+                            key={lng.code}
+                            type="button"
+                            onClick={() => handleLanguageChange(lng.code)}
+                            className={`w-full text-left px-3 py-2 text-[13px] font-semibold tracking-[0.12em] hover:bg-gray-100 ${
+                              currentLang === lng.code ? "text-[#ff8c00]" : "text-gray-800"
+                            }`}
+                          >
+                            {lng.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* MOBILE Hamburger */}
@@ -175,7 +220,7 @@ const NavBar = () => {
                   onClick={toggleMenu}
                   className="block py-1 tracking-[0.16em] hover:text-[#ff8c00] transition-colors duration-200"
                 >
-                  HOME
+                  {t("nav.home")}
                 </HashLink>
               </li>
               <li>
@@ -185,7 +230,7 @@ const NavBar = () => {
                   onClick={toggleMenu}
                   className="block py-1 tracking-[0.16em] hover:text-[#ff8c00] transition-colors duration-200"
                 >
-                  COMMUNITY
+                  {t("nav.community")}
                 </HashLink>
               </li>
               <li>
@@ -194,7 +239,7 @@ const NavBar = () => {
                   onClick={toggleMenu}
                   className="block py-1 tracking-[0.16em] hover:text-[#ff8c00] transition-colors duration-200"
                 >
-                  CONTACT
+                  {t("nav.contact")}
                 </NavLink>
               </li>
               <li>
@@ -203,7 +248,7 @@ const NavBar = () => {
                   onClick={toggleMenu}
                   className="block py-1 tracking-[0.16em] hover:text-[#ff8c00] transition-colors duration-200"
                 >
-                  SPACES
+                  {t("nav.spaces")}
                 </NavLink>
               </li>
 
@@ -214,7 +259,7 @@ const NavBar = () => {
                     onClick={toggleMenu}
                     className="block py-1 tracking-[0.16em] hover:text-[#ff8c00] transition-colors duration-200"
                   >
-                    DASHBOARD
+                    {t("nav.dashboard")}
                   </NavLink>
                 </li>
               )}
@@ -226,7 +271,7 @@ const NavBar = () => {
                     onClick={toggleMenu}
                     className="block py-1 tracking-[0.16em] hover:text-[#ff8c00] transition-colors duration-200"
                   >
-                    LOGIN
+                    {t("nav.login")}
                   </NavLink>
                 </li>
               )}
@@ -240,18 +285,34 @@ const NavBar = () => {
                     }}
                     className="block py-1 tracking-[0.16em] hover:text-[#ff8c00] transition-colors duration-200"
                   >
-                    LOGOUT
+                    {t("nav.logout")}
                   </button>
                 </li>
               )}
 
+              {/* MOBILE language selection */}
               <li className="pt-2">
-                <button
-                  className="w-full px-4 py-2 rounded-full bg-[#ff8c00] text-white text-[15px] shadow-md font-semibold tracking-[0.12em] hover:bg-[#ff9f2c] transition-colors duration-200"
-                  onClick={toggleMenu}
-                >
-                  EN / MK
-                </button>
+                <div className="w-full">
+                  <p className="text-[13px] text-gray-500 mb-1 tracking-[0.14em]">
+                    LANGUAGE
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    {LANGUAGES.map((lng) => (
+                      <button
+                        key={lng.code}
+                        type="button"
+                        onClick={() => handleLanguageChange(lng.code)}
+                        className={`flex-1 px-3 py-2 rounded-full text-[14px] tracking-[0.12em] font-semibold border transition-colors duration-200 ${
+                          currentLang === lng.code
+                            ? "bg-[#ff8c00] text-white border-[#ff8c00]"
+                            : "bg-white text-gray-800 border-gray-300 hover:bg-gray-100"
+                        }`}
+                      >
+                        {lng.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </li>
             </ul>
           </div>

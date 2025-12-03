@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminRoute from "./components/AdminRoute";
 import VerifyEmail from "./pages/VerifyEmail";
+import ConfirmReservation from "./pages/ConfirmReservation.jsx";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -49,6 +50,7 @@ const router = createBrowserRouter([
         ],
       },
       { path: "/verify/:token", element: <VerifyEmail /> },
+      { path: "/confirm-reservation/:token", element: <ConfirmReservation /> },
     ],
   },
 ]);

@@ -1,0 +1,11 @@
+{
+  "nav": {
+    "home": "ACCUEIL",
+    "community": "COMMUNAUTÉ",
+    "contact": "CONTACT",
+    "spaces": "ESPACES",
+    "dashboard": "TABLEAU DE BORD",
+    "login": "CONNEXION",
+    "logout": "DÉCONNEXION"
+  }
+}

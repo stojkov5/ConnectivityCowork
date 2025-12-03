@@ -66,6 +66,21 @@ const reservationSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    // NEW: reservation confirmation status
+    status: {
+      type: String,
+      enum: ["pending", "confirmed", "cancelled"],
+      default: "pending",
+    },
+
+    // NEW: email confirmation token (one token per batch)
+    confirmationToken: {
+      type: String,
+    },
+    confirmationTokenExpires: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
