@@ -1,5 +1,6 @@
-import React from "react";
-import { Modal, Tag, Typography, Input, Alert, List } from "antd";
+// src/components/Offices/KiselaVoda/ReservationModal.jsx
+import React, { useMemo } from "react";
+import { Modal, Alert, Tag, Space, Typography, Input } from "antd";
 
 const { Text } = Typography;
 
@@ -8,19 +9,26 @@ const ReservationModal = ({
   onClose,
   range,
   plan,
-  selectedRooms = [],
+  selectedRooms,
   userEmail,
   companyName,
   onCompanyNameChange,
   hasConflicts,
-  conflictDetails = [],
+  conflictDetails,
   onConfirm,
   isAuthenticated,
 }) => {
-  const disabled =
+  const planLabel = useMemo(() => {
+    if (plan === "daily") return "Daily";
+    if (plan === "weekly") return "Weekly (7 days)";
+    if (plan === "monthly") return "Monthly";
+    return plan || "";
+  }, [plan]);
+
+  const confirmDisabled =
     !isAuthenticated ||
     !range ||
-    !plan ||
+    !selectedRooms ||
     selectedRooms.length === 0 ||
     !companyName.trim() ||
     hasConflicts;
@@ -31,95 +39,101 @@ const ReservationModal = ({
       open={open}
       onCancel={onClose}
       onOk={onConfirm}
-      okButtonProps={{ disabled }}
-      okText={isAuthenticated ? "Reserve" : "Log in to Reserve"}
+      okButtonProps={{ disabled: confirmDisabled }}
+      okText={
+        !isAuthenticated
+          ? "Log in to reserve"
+          : hasConflicts
+          ? "Cannot reserve"
+          : "Send verification email"
+      }
       destroyOnClose
     >
       {!isAuthenticated && (
         <Alert
           type="warning"
           message="You must be logged in to make a reservation."
-          style={{ marginBottom: 10 }}
+          style={{ marginBottom: 12 }}
         />
       )}
+
+      {hasConflicts && conflictDetails.length > 0 && (
+        <Alert
+          type="error"
+          showIcon
+          message="Some selected rooms are already booked in the selected period."
+          description={
+            <div style={{ marginTop: 8 }}>
+              {conflictDetails.map((room) => (
+                <div key={room.id} style={{ marginBottom: 6 }}>
+                  <Text strong>{room.name}</Text>
+                  <br />
+                  {room.reservations.map((r, idx) => (
+                    <div key={idx}>
+                      <Tag>{r.startDate}</Tag> to <Tag>{r.endDate}</Tag>{" "}
+                      <Text>({r.type})</Text>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          }
+          style={{ marginBottom: 12 }}
+        />
+      )}
+
+      <div style={{ marginBottom: 10 }}>
+        <Text strong>Plan:</Text> <Text>{planLabel}</Text>
+      </div>
 
       {range && (
         <div style={{ marginBottom: 10 }}>
           <Text strong>Range:</Text>
-          <div style={{ marginTop: 6 }}>
-            <Tag>{range.start}</Tag> <Text>to</Text> <Tag>{range.end}</Tag>
+          <div style={{ marginTop: 4 }}>
+            <Tag>{range.start}</Tag> to <Tag>{range.end}</Tag>
           </div>
-        </div>
-      )}
-
-      {plan && (
-        <div style={{ marginBottom: 10 }}>
-          <Text strong>Plan:</Text> <Tag>{plan}</Tag>
         </div>
       )}
 
       <div style={{ marginBottom: 10 }}>
         <Text strong>Selected rooms:</Text>
-        {selectedRooms.length === 0 ? (
-          <div style={{ marginTop: 6 }}>
+        {selectedRooms && selectedRooms.length > 0 ? (
+          <Space direction="vertical" style={{ marginTop: 4 }}>
+            {selectedRooms.map((room) => (
+              <Tag key={room.id}>{room.name}</Tag>
+            ))}
+          </Space>
+        ) : (
+          <div style={{ marginTop: 4 }}>
             <Text type="secondary">No rooms selected.</Text>
           </div>
-        ) : (
-          <List
-            size="small"
-            dataSource={selectedRooms}
-            renderItem={(r) => (
-              <List.Item style={{ padding: "4px 0" }}>
-                <Tag>{r.name}</Tag>
-              </List.Item>
-            )}
-            style={{ marginTop: 6, maxHeight: 160, overflowY: "auto" }}
-          />
         )}
       </div>
-
-      {userEmail && (
-        <div style={{ marginBottom: 10 }}>
-          <Text strong>Reservation under:</Text>{" "}
-          <Text type="secondary">{userEmail}</Text>
-        </div>
-      )}
 
       <div style={{ marginBottom: 10 }}>
         <Text strong>Company / Organization:</Text>
         <Input
-          placeholder="Enter company / organization name"
+          placeholder="Enter company name"
           value={companyName}
           onChange={(e) => onCompanyNameChange(e.target.value)}
           style={{ marginTop: 6 }}
         />
       </div>
 
-      {hasConflicts && conflictDetails.length > 0 && (
+      {userEmail && (
+        <div style={{ marginTop: 10 }}>
+          <Text type="secondary">
+            Reservation email will be sent to: {userEmail}
+          </Text>
+        </div>
+      )}
+
+      {!hasConflicts && (
         <Alert
-          type="error"
+          type="info"
           showIcon
-          style={{ marginTop: 10 }}
-          message="Some selected rooms have conflicting reservations."
-          description={
-            <List
-              size="small"
-              dataSource={conflictDetails}
-              renderItem={(item) => (
-                <List.Item>
-                  <div>
-                    <Text strong>{item.name}</Text>
-                    {item.reservations.map((r, idx) => (
-                      <div key={idx}>
-                        <Tag>{r.startDate}</Tag> <Text>to</Text>{" "}
-                        <Tag>{r.endDate}</Tag> <Text>({r.type})</Text>
-                      </div>
-                    ))}
-                  </div>
-                </List.Item>
-              )}
-            />
-          }
+          style={{ marginTop: 12 }}
+          message="After confirming, you will receive an email with a link to finalize this reservation."
         />
       )}
     </Modal>
