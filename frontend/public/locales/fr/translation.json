@@ -152,5 +152,116 @@
         "Parking privé disponible."
       ]
     }
+  },
+  "reservationModal": {
+    "title": "Confirmer la réservation",
+    "ok": {
+      "login": "Connectez-vous pour réserver",
+      "cannot": "Impossible de réserver",
+      "sendEmail": "Envoyer l’e-mail de vérification"
+    },
+    "mustBeLoggedIn": "Vous devez être connecté pour effectuer une réservation.",
+    "conflictTitle": "Certaines salles sélectionnées sont déjà réservées sur cette période.",
+    "to": "à",
+    "planLabel": "Formule :",
+    "rangeLabel": "Période :",
+    "selectedRoomsLabel": "Salles sélectionnées :",
+    "noRoomsSelected": "Aucune salle sélectionnée.",
+    "companyLabel": "Entreprise / Organisation :",
+    "companyPlaceholder": "Entrez le nom de l’entreprise",
+    "emailInfo": "L’e-mail de réservation sera envoyé à : {{email}}",
+    "infoAfterConfirm": "Après confirmation, vous recevrez un e-mail avec un lien pour finaliser cette réservation.",
+    "plan": {
+      "daily": "Quotidienne",
+      "weekly": "Hebdomadaire (7 jours)",
+      "monthly": "Mensuelle"
+    }
+  },
+  "kiselaVoda": {
+    "title": "RÉSERVATIONS – KISELA VODA",
+    "datePlaceholder": "Choisissez une date",
+    "planPlaceholder": "Choisissez une formule",
+    "plans": {
+      "daily": "Quotidienne",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuelle"
+    },
+    "reserveButton": "Réserver",
+    "conflictAlert": "Certaines salles sélectionnées sont déjà réservées sur cette période. Modifiez votre sélection ou votre formule.",
+    "status": {
+      "free": "libre",
+      "selected": "sélectionnée",
+      "booked": "réservée"
+    },
+    "overview": {
+      "show": "Afficher l’aperçu",
+      "hide": "Masquer l’aperçu"
+    },
+    "errors": {
+      "selectDateAndPlan": "Sélectionnez d’abord une date et une formule.",
+      "mustLogin": "Vous devez être connecté pour réserver.",
+      "selectDate": "Sélectionnez d’abord une date.",
+      "selectPlan": "Sélectionnez une formule.",
+      "selectRoom": "Sélectionnez au moins une salle.",
+      "hasConflicts": "Certaines salles sélectionnées sont déjà réservées pour cette période. Ajustez votre sélection ou votre formule."
+    }
+  },
+  "reservation": {
+    "success": "La demande de réservation a été envoyée. Veuillez la confirmer depuis votre e-mail.",
+    "errorGeneric": "Échec de la création de la réservation. Il est possible qu’il y ait un conflit."
+  },
+  "center": {
+    "title": "RÉSERVATIONS – CENTAR",
+    "datePlaceholder": "Choisissez une date",
+    "planPlaceholder": "Choisissez une formule",
+    "plans": {
+      "daily": "Quotidienne",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuelle"
+    },
+    "offices": {
+      "centar": "Centar - Premier étage",
+      "centar2": "Centar - Mezzanine"
+    },
+    "reserveButton": "Réserver",
+    "conflictAlert": "Certaines places sélectionnées sont déjà réservées sur cette période. Modifiez votre sélection ou votre formule.",
+    "status": {
+      "free": "libres",
+      "selected": "sélectionnées",
+      "booked": "réservées"
+    },
+    "overview": {
+      "show": "Afficher l’aperçu",
+      "hide": "Masquer l’aperçu"
+    },
+    "errors": {
+      "selectDateAndPlan": "Sélectionnez d’abord une date et une formule.",
+      "mustLogin": "Vous devez être connecté pour réserver.",
+      "selectDate": "Sélectionnez d’abord une date.",
+      "selectPlan": "Sélectionnez une formule.",
+      "selectSeat": "Sélectionnez au moins une place.",
+      "hasConflicts": "Certaines places sélectionnées sont déjà réservées pour cette période. Ajustez votre sélection ou votre formule."
+    }
+  },
+  "reservation-center": {
+    "success": "La demande de réservation a été envoyée. Veuillez la confirmer depuis votre e-mail.",
+    "errorGeneric": "Échec de la création de la réservation. Il est possible qu’il y ait un conflit."
+  },
+  "reservationModalCenter": {
+    "title": "Confirmer la réservation",
+    "ok": {
+      "reserve": "Réserver",
+      "login": "Connectez-vous pour réserver"
+    },
+    "mustBeLoggedIn": "Vous devez être connecté pour effectuer une réservation.",
+    "rangeLabel": "Période :",
+    "planLabel": "Formule :",
+    "to": "à",
+    "selectedSeatsLabel": "Places sélectionnées :",
+    "noSeatsSelected": "Aucune place sélectionnée.",
+    "reservationUnderLabel": "Réservation au nom de :",
+    "companyLabel": "Entreprise / Organisation :",
+    "companyPlaceholder": "Entrez le nom de l’entreprise / organisation",
+    "conflictsMessage": "Certaines places sélectionnées ont des réservations en conflit."
   }
 }

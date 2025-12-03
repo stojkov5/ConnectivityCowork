@@ -18,6 +18,7 @@ import FloorPlan from "./FloorPlan";
 import ReservationModal from "./ReservationModal";
 import { useAuth } from "../../../context/AuthContext.jsx";
 
+import { useTranslation } from "react-i18next";
 import "../../../styles/Centar.css";
 
 // === offices data ===
@@ -107,12 +108,10 @@ const computeRange = (plan, selectedDate) => {
 };
 
 const rangesOverlap = (aStart, aEnd, bStart, bEnd) =>
-  !(
-    dayjs(aEnd).isBefore(dayjs(bStart)) ||
-    dayjs(aStart).isAfter(dayjs(bEnd))
-  );
+  !(dayjs(aEnd).isBefore(dayjs(bStart)) || dayjs(aStart).isAfter(dayjs(bEnd)));
 
 const Center = ({ isLoggedInProp = null }) => {
+  const { t } = useTranslation();
   const { token, user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -176,9 +175,7 @@ const Center = ({ isLoggedInProp = null }) => {
       );
     },
     onSuccess: () => {
-      message.success(
-        "Reservation request sent. Please confirm it from your email."
-      );
+      message.success(t("reservation-center.success"));
       queryClient.invalidateQueries(["reservations", "centar", activeOfficeId]);
       setSelectedSeatIds([]);
       setSelectedPlan(null);
@@ -187,8 +184,7 @@ const Center = ({ isLoggedInProp = null }) => {
     },
     onError: (err) => {
       const msg =
-        err.response?.data?.message ||
-        "Failed to create reservation. Possibly a conflict.";
+        err.response?.data?.message || t("reservation-center.errorGeneric");
       message.error(msg);
     },
   });
@@ -304,7 +300,7 @@ const Center = ({ isLoggedInProp = null }) => {
 
   const handleSeatClick = (seat) => {
     if (!selectedDate || !selectedPlan) {
-      message.error("Select a date and plan first");
+      message.error(t("center.errors.selectDateAndPlan"));
       return;
     }
     if (seat.status === "taken" || seat.status === "disabled") return;
@@ -318,25 +314,23 @@ const Center = ({ isLoggedInProp = null }) => {
 
   const handleOpenModal = () => {
     if (!isAuthenticated) {
-      message.error("You must be logged in to reserve.");
+      message.error(t("center.errors.mustLogin"));
       return;
     }
     if (!selectedDate) {
-      message.error("Select a date first.");
+      message.error(t("center.errors.selectDate"));
       return;
     }
     if (!selectedPlan) {
-      message.error("Select a plan.");
+      message.error(t("center.errors.selectPlan"));
       return;
     }
     if (selectedSeatIds.length === 0) {
-      message.error("Select at least one seat.");
+      message.error(t("center.errors.selectSeat"));
       return;
     }
     if (hasConflicts) {
-      message.error(
-        "Some selected seats are already booked in that period. Adjust your selection or plan."
-      );
+      message.error(t("center.errors.hasConflicts"));
       return;
     }
     setModalOpen(true);
@@ -378,9 +372,7 @@ const Center = ({ isLoggedInProp = null }) => {
           </div>
         );
       }
-      return (
-        <div className="calendar-dot text-gray-700">{current.date()}</div>
-      );
+      return <div className="calendar-dot text-gray-700">{current.date()}</div>;
     },
     [reservations, activeOffice]
   );
@@ -398,7 +390,7 @@ const Center = ({ isLoggedInProp = null }) => {
         <Col span={20}>
           <div className="bg-white rounded-xl shadow-lg p-10 border border-gray-100">
             <h2 className="text-center text-3xl font-semibold text-orange-500 mb-10 tracking-wide">
-              CENTER BOOKINGS
+              {t("center.title")}
             </h2>
 
             <Row gutter={[24, 24]}>
@@ -416,20 +408,20 @@ const Center = ({ isLoggedInProp = null }) => {
                     cellRender={dateRender}
                     className="w-full"
                     allowClear={false}
-                    placeholder="Select a date"
+                    placeholder={t("center.datePlaceholder")}
                   />
 
                   {/* Plan selector */}
                   <Select
                     value={selectedPlan}
                     onChange={setSelectedPlan}
-                    placeholder="Select plan"
+                    placeholder={t("center.planPlaceholder")}
                     disabled={!selectedDate}
                     style={{ width: "100%" }}
                     options={[
-                      { value: "daily", label: "Daily" },
-                      { value: "weekly", label: "Weekly" },
-                      { value: "monthly", label: "Monthly" },
+                      { value: "daily", label: t("center.plans.daily") },
+                      { value: "weekly", label: t("center.plans.weekly") },
+                      { value: "monthly", label: t("center.plans.monthly") },
                     ]}
                   />
 
@@ -444,7 +436,7 @@ const Center = ({ isLoggedInProp = null }) => {
                   >
                     {offices.map((o) => (
                       <option key={o.id} value={o.id}>
-                        {o.name}
+                        {t(`center.offices.${o.id}`)}
                       </option>
                     ))}
                   </select>
@@ -455,7 +447,7 @@ const Center = ({ isLoggedInProp = null }) => {
                     disabled={reserveDisabled}
                     onClick={handleOpenModal}
                   >
-                    Reserve
+                    {t("center.reserveButton")}
                   </button>
 
                   {/* Conflict alert */}
@@ -464,7 +456,7 @@ const Center = ({ isLoggedInProp = null }) => {
                       type="error"
                       showIcon
                       className="rounded-md"
-                      message="Some selected seats are already booked in this period. Change your selection or plan."
+                      message={t("center.conflictAlert")}
                     />
                   )}
 
@@ -476,11 +468,10 @@ const Center = ({ isLoggedInProp = null }) => {
                           {selectedDate.format("YYYY-MM-DD")}
                           <Tag color="blue" className="ml-2">
                             {
-                              seatsWithStatus.filter(
-                                (x) => x.status === "free"
-                              ).length
+                              seatsWithStatus.filter((x) => x.status === "free")
+                                .length
                             }{" "}
-                            free
+                            {t("center.status.free")}
                           </Tag>
                           <Tag color="gold" className="ml-2">
                             {
@@ -488,7 +479,7 @@ const Center = ({ isLoggedInProp = null }) => {
                                 (x) => x.status === "selected"
                               ).length
                             }{" "}
-                            selected
+                            {t("center.status.selected")}
                           </Tag>
                           <Tag color="red" className="ml-2">
                             {
@@ -496,7 +487,7 @@ const Center = ({ isLoggedInProp = null }) => {
                                 (x) => x.status === "taken"
                               ).length
                             }{" "}
-                            booked
+                            {t("center.status.booked")}
                           </Tag>
                         </>
                       }
@@ -509,7 +500,9 @@ const Center = ({ isLoggedInProp = null }) => {
                     onClick={() => setShowOverview((prev) => !prev)}
                     className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm"
                   >
-                    {showOverview ? "Hide Overview" : "Show Overview"}
+                    {showOverview
+                      ? t("center.overview.hide")
+                      : t("center.overview.show")}
                   </button>
 
                   {showOverview && (

@@ -1,13 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
-import {
-  Row,
-  Col,
-  DatePicker,
-  Alert,
-  Tag,
-  message,
-  Select,
-} from "antd";
+import { Row, Col, DatePicker, Alert, Tag, message, Select } from "antd";
 import dayjs from "dayjs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -17,6 +9,7 @@ import FloorPlan from "./FloorPlan";
 import ReservationModal from "./ReservationModal";
 import { useAuth } from "../../../context/AuthContext.jsx";
 
+import { useTranslation } from "react-i18next";
 import "../../../styles/KiselaVoda.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -29,7 +22,7 @@ const initialRooms = [
   { id: "room-5", name: "Room 5" },
   { id: "room-6", name: "Room 6" },
   { id: "room-7", name: "Room 7" },
-  { id: "room-8", name: "Room 8" },
+  { id: "room-8", name: "Room 8" }
 ];
 
 const normalizeDate = (d) => dayjs(d).format("YYYY-MM-DD");
@@ -61,6 +54,7 @@ const rangesOverlap = (aStart, aEnd, bStart, bEnd) =>
   );
 
 const KiselaVoda = ({ isLoggedInProp = null }) => {
+  const { t } = useTranslation();
   const { token, user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -81,8 +75,8 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
       const res = await axios.get(`${API_URL}/api/reservations`, {
         params: {
           location: "kiselavoda",
-          officeId: "kiselavoda",
-        },
+          officeId: "kiselavoda"
+        }
       });
 
       return res.data.reservations.map((r) => ({
@@ -91,9 +85,9 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
         roomName: r.resourceName,
         type: r.plan,
         startDate: dayjs(r.startDate).format("YYYY-MM-DD"),
-        endDate: dayjs(r.endDate).format("YYYY-MM-DD"),
+        endDate: dayjs(r.endDate).format("YYYY-MM-DD")
       }));
-    },
+    }
   });
 
   // === mutation for creating reservation (email-verified on backend) ===
@@ -108,18 +102,18 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
           resourceIds: roomIds,
           plan,
           startDate,
-          companyName,
+          companyName
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
-          },
+            Authorization: `Bearer ${token}`
+          }
         }
       );
     },
     onSuccess: () => {
       message.success(
-        "Reservation request sent. Please confirm it from your email."
+        t("reservation.success")
       );
       queryClient.invalidateQueries(["reservations", "kiselavoda"]);
       setSelectedRoomIds([]);
@@ -129,10 +123,9 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     },
     onError: (err) => {
       const msg =
-        err.response?.data?.message ||
-        "Failed to create reservation. Possibly a conflict.";
+        err.response?.data?.message || t("reservation.errorGeneric");
       message.error(msg);
-    },
+    }
   });
 
   // range for current date + plan
@@ -165,8 +158,8 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
           .map((r) => ({
             start: r.startDate,
             end: r.endDate,
-            type: r.type,
-          })),
+            type: r.type
+          }))
       }));
     }
 
@@ -191,8 +184,8 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
           .map((r) => ({
             start: r.startDate,
             end: r.endDate,
-            type: r.type,
-          })),
+            type: r.type
+          }))
       };
     });
   }, [
@@ -201,7 +194,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     selectedPlan,
     range,
     selectedRoomIds,
-    getConflictingReservationsForRange,
+    getConflictingReservationsForRange
   ]);
 
   const selectedRooms = useMemo(
@@ -224,8 +217,8 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
           reservations: conflicts.map((r) => ({
             startDate: r.startDate,
             endDate: r.endDate,
-            type: r.type,
-          })),
+            type: r.type
+          }))
         });
       }
     }
@@ -236,7 +229,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
 
   const handleRoomClick = (room) => {
     if (!selectedDate || !selectedPlan) {
-      message.error("Select a date and plan first");
+      message.error(t("kiselaVoda.errors.selectDateAndPlan"));
       return;
     }
     if (room.status === "taken" || room.status === "disabled") return;
@@ -250,25 +243,23 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
 
   const handleOpenModal = () => {
     if (!isAuthenticated) {
-      message.error("You must be logged in to reserve.");
+      message.error(t("kiselaVoda.errors.mustLogin"));
       return;
     }
     if (!selectedDate) {
-      message.error("Select a date first.");
+      message.error(t("kiselaVoda.errors.selectDate"));
       return;
     }
     if (!selectedPlan) {
-      message.error("Select a plan.");
+      message.error(t("kiselaVoda.errors.selectPlan"));
       return;
     }
     if (selectedRoomIds.length === 0) {
-      message.error("Select at least one room.");
+      message.error(t("kiselaVoda.errors.selectRoom"));
       return;
     }
     if (hasConflicts) {
-      message.error(
-        "Some selected rooms are already booked in that period. Adjust your selection or plan."
-      );
+      message.error(t("kiselaVoda.errors.hasConflicts"));
       return;
     }
     setModalOpen(true);
@@ -280,7 +271,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
       roomIds: selectedRoomIds,
       plan: selectedPlan,
       startDate: range.start,
-      companyName,
+      companyName
     });
   };
 
@@ -337,7 +328,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
         <Col span={20}>
           <div className="bg-white shadow-lg rounded-xl p-10 border border-gray-100">
             <h2 className="text-center text-3xl font-semibold text-orange-500 tracking-wide mb-10">
-              KISELA VODA BOOKINGS
+              {t("kiselaVoda.title")}
             </h2>
 
             <Row gutter={[24, 24]}>
@@ -357,20 +348,20 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                     cellRender={dateRender}
                     className="w-full"
                     allowClear={false}
-                    placeholder="Select a date"
+                    placeholder={t("kiselaVoda.datePlaceholder")}
                   />
 
                   {/* Plan selector */}
                   <Select
                     value={selectedPlan}
                     onChange={setSelectedPlan}
-                    placeholder="Select plan"
+                    placeholder={t("kiselaVoda.planPlaceholder")}
                     disabled={!selectedDate}
                     style={{ width: "100%" }}
                     options={[
-                      { value: "daily", label: "Daily" },
-                      { value: "weekly", label: "Weekly" },
-                      { value: "monthly", label: "Monthly" },
+                      { value: "daily", label: t("kiselaVoda.plans.daily") },
+                      { value: "weekly", label: t("kiselaVoda.plans.weekly") },
+                      { value: "monthly", label: t("kiselaVoda.plans.monthly") }
                     ]}
                   />
 
@@ -380,7 +371,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                     disabled={reserveDisabled}
                     onClick={handleOpenModal}
                   >
-                    Reserve
+                    {t("kiselaVoda.reserveButton")}
                   </button>
 
                   {/* Conflict alert */}
@@ -389,7 +380,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                       type="error"
                       showIcon
                       className="rounded-md"
-                      message="Some selected rooms are already booked in this period. Change your selection or plan."
+                      message={t("kiselaVoda.conflictAlert")}
                     />
                   )}
 
@@ -405,7 +396,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                                 (x) => x.status === "free"
                               ).length
                             }{" "}
-                            free
+                            {t("kiselaVoda.status.free")}
                           </Tag>
                           <Tag color="gold" className="ml-2">
                             {
@@ -413,7 +404,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                                 (x) => x.status === "selected"
                               ).length
                             }{" "}
-                            selected
+                            {t("kiselaVoda.status.selected")}
                           </Tag>
                           <Tag color="red" className="ml-2">
                             {
@@ -421,7 +412,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                                 (x) => x.status === "taken"
                               ).length
                             }{" "}
-                            booked
+                            {t("kiselaVoda.status.booked")}
                           </Tag>
                         </>
                       }
@@ -434,7 +425,9 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                     onClick={() => setShowOverview((prev) => !prev)}
                     className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm"
                   >
-                    {showOverview ? "Hide Overview" : "Show Overview"}
+                    {showOverview
+                      ? t("kiselaVoda.overview.hide")
+                      : t("kiselaVoda.overview.show")}
                   </button>
 
                   {showOverview && (
@@ -458,7 +451,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                       disabled: "#d1d5db",
                       free: "#4ade80",
                       selected: "#facc15",
-                      taken: "#ef4444",
+                      taken: "#ef4444"
                     }}
                   />
                 </div>

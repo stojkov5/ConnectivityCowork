@@ -1,5 +1,6 @@
 import React from "react";
 import { Modal, Tag, Typography, Input, Alert, List } from "antd";
+import { useTranslation } from "react-i18next";
 
 const { Text } = Typography;
 
@@ -17,6 +18,8 @@ const ReservationModal = ({
   onConfirm,
   isAuthenticated,
 }) => {
+  const { t } = useTranslation();
+
   const disabled =
     !isAuthenticated ||
     !range ||
@@ -25,44 +28,53 @@ const ReservationModal = ({
     !companyName.trim() ||
     hasConflicts;
 
+  const okText = isAuthenticated
+    ? t("reservationModalCenter.ok.reserve")
+    : t("reservationModalCenter.ok.login");
+
   return (
     <Modal
-      title="Confirm Reservation"
+      title={t("reservationModalCenter.title")}
       open={open}
       onCancel={onClose}
       onOk={onConfirm}
       okButtonProps={{ disabled }}
-      okText={isAuthenticated ? "Reserve" : "Log in to Reserve"}
+      okText={okText}
       destroyOnClose
     >
       {!isAuthenticated && (
         <Alert
           type="warning"
-          message="You must be logged in to make a reservation."
+          message={t("reservationModalCenter.mustBeLoggedIn")}
           style={{ marginBottom: 10 }}
         />
       )}
 
       {range && (
         <div style={{ marginBottom: 10 }}>
-          <Text strong>Range:</Text>
+          <Text strong>{t("reservationModalCenter.rangeLabel")}</Text>
           <div style={{ marginTop: 6 }}>
-            <Tag>{range.start}</Tag> <Text>to</Text> <Tag>{range.end}</Tag>
+            <Tag>{range.start}</Tag>{" "}
+            <Text>{t("reservationModalCenter.to")}</Text>{" "}
+            <Tag>{range.end}</Tag>
           </div>
         </div>
       )}
 
       {plan && (
         <div style={{ marginBottom: 10 }}>
-          <Text strong>Plan:</Text> <Tag>{plan}</Tag>
+          <Text strong>{t("reservationModalCenter.planLabel")}</Text>{" "}
+          <Tag>{plan}</Tag>
         </div>
       )}
 
       <div style={{ marginBottom: 10 }}>
-        <Text strong>Selected seats:</Text>
+        <Text strong>{t("reservationModalCenter.selectedSeatsLabel")}</Text>
         {selectedSeats.length === 0 ? (
           <div style={{ marginTop: 6 }}>
-            <Text type="secondary">No seats selected.</Text>
+            <Text type="secondary">
+              {t("reservationModalCenter.noSeatsSelected")}
+            </Text>
           </div>
         ) : (
           <List
@@ -80,15 +92,15 @@ const ReservationModal = ({
 
       {userEmail && (
         <div style={{ marginBottom: 10 }}>
-          <Text strong>Reservation under:</Text>{" "}
+          <Text strong>{t("reservationModalCenter.reservationUnderLabel")}</Text>{" "}
           <Text type="secondary">{userEmail}</Text>
         </div>
       )}
 
       <div style={{ marginBottom: 10 }}>
-        <Text strong>Company / Organization:</Text>
+        <Text strong>{t("reservationModalCenter.companyLabel")}</Text>
         <Input
-          placeholder="Enter company / organization name"
+          placeholder={t("reservationModalCenter.companyPlaceholder")}
           value={companyName}
           onChange={(e) => onCompanyNameChange(e.target.value)}
           style={{ marginTop: 6 }}
@@ -100,7 +112,7 @@ const ReservationModal = ({
           type="error"
           showIcon
           style={{ marginTop: 10 }}
-          message="Some selected seats have conflicting reservations."
+          message={t("reservationModalCenter.conflictsMessage")}
           description={
             <List
               size="small"
@@ -111,8 +123,10 @@ const ReservationModal = ({
                     <Text strong>{item.name}</Text>
                     {item.reservations.map((r, idx) => (
                       <div key={idx}>
-                        <Tag>{r.startDate}</Tag> <Text>to</Text>{" "}
-                        <Tag>{r.endDate}</Tag> <Text>({r.type})</Text>
+                        <Tag>{r.startDate}</Tag>{" "}
+                        <Text>{t("reservationModalCenter.to")}</Text>{" "}
+                        <Tag>{r.endDate}</Tag>{" "}
+                        <Text>({r.type})</Text>
                       </div>
                     ))}
                   </div>

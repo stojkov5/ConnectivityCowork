@@ -152,5 +152,116 @@
         "Private parking available."
       ]
     }
+  },
+  "reservationModal": {
+    "title": "Confirm Reservation",
+    "ok": {
+      "login": "Log in to reserve",
+      "cannot": "Cannot reserve",
+      "sendEmail": "Send verification email"
+    },
+    "mustBeLoggedIn": "You must be logged in to make a reservation.",
+    "conflictTitle": "Some selected rooms are already booked in the selected period.",
+    "to": "to",
+    "planLabel": "Plan:",
+    "rangeLabel": "Range:",
+    "selectedRoomsLabel": "Selected rooms:",
+    "noRoomsSelected": "No rooms selected.",
+    "companyLabel": "Company / Organization:",
+    "companyPlaceholder": "Enter company name",
+    "emailInfo": "Reservation email will be sent to: {{email}}",
+    "infoAfterConfirm": "After confirming, you will receive an email with a link to finalize this reservation.",
+    "plan": {
+      "daily": "Daily",
+      "weekly": "Weekly (7 days)",
+      "monthly": "Monthly"
+    }
+  },
+  "kiselaVoda": {
+    "title": "KISELA VODA BOOKINGS",
+    "datePlaceholder": "Select a date",
+    "planPlaceholder": "Select plan",
+    "plans": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "reserveButton": "Reserve",
+    "conflictAlert": "Some selected rooms are already booked in this period. Change your selection or plan.",
+    "status": {
+      "free": "free",
+      "selected": "selected",
+      "booked": "booked"
+    },
+    "overview": {
+      "show": "Show Overview",
+      "hide": "Hide Overview"
+    },
+    "errors": {
+      "selectDateAndPlan": "Select a date and plan first",
+      "mustLogin": "You must be logged in to reserve.",
+      "selectDate": "Select a date first.",
+      "selectPlan": "Select a plan.",
+      "selectRoom": "Select at least one room.",
+      "hasConflicts": "Some selected rooms are already booked in that period. Adjust your selection or plan."
+    }
+  },
+  "reservation": {
+    "success": "Reservation request sent. Please confirm it from your email.",
+    "errorGeneric": "Failed to create reservation. Possibly a conflict."
+  },
+  "center": {
+    "title": "CENTER BOOKINGS",
+    "datePlaceholder": "Select a date",
+    "planPlaceholder": "Select plan",
+    "plans": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "offices": {
+      "centar": "Centar - First Floor",
+      "centar2": "Centar - Gallery"
+    },
+    "reserveButton": "Reserve",
+    "conflictAlert": "Some selected seats are already booked in this period. Change your selection or plan.",
+    "status": {
+      "free": "free",
+      "selected": "selected",
+      "booked": "booked"
+    },
+    "overview": {
+      "show": "Show Overview",
+      "hide": "Hide Overview"
+    },
+    "errors": {
+      "selectDateAndPlan": "Select a date and plan first",
+      "mustLogin": "You must be logged in to reserve.",
+      "selectDate": "Select a date first.",
+      "selectPlan": "Select a plan.",
+      "selectSeat": "Select at least one seat.",
+      "hasConflicts": "Some selected seats are already booked in that period. Adjust your selection or plan."
+    }
+  },
+  "reservation-center": {
+    "success": "Reservation request sent. Please confirm it from your email.",
+    "errorGeneric": "Failed to create reservation. Possibly a conflict."
+  },
+  "reservationModalCenter": {
+    "title": "Confirm Reservation",
+    "ok": {
+      "reserve": "Reserve",
+      "login": "Log in to Reserve"
+    },
+    "mustBeLoggedIn": "You must be logged in to make a reservation.",
+    "rangeLabel": "Range:",
+    "planLabel": "Plan:",
+    "to": "to",
+    "selectedSeatsLabel": "Selected seats:",
+    "noSeatsSelected": "No seats selected.",
+    "reservationUnderLabel": "Reservation under:",
+    "companyLabel": "Company / Organization:",
+    "companyPlaceholder": "Enter company / organization name",
+    "conflictsMessage": "Some selected seats have conflicting reservations."
   }
 }
