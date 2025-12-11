@@ -20,13 +20,13 @@ import { useAuth } from "../../../context/AuthContext.jsx";
 
 import { useTranslation } from "react-i18next";
 import "../../../styles/Centar.css";
-
+const base = import.meta.env.BASE_URL;
 // === offices data ===
 const offices = [
   {
     id: "centar",
     name: "Centar - First Floor",
-    image: "/Centar.svg",
+    image: `${base}Centar.svg`,
     viewBox: "0 0 893 588",
     seats: [
       { id: "seat-1", name: "Seat 1" },
@@ -55,7 +55,7 @@ const offices = [
   {
     id: "centar2",
     name: "Centar - Gallery",
-    image: "/Centar2.svg",
+    image: `${base}Centar2.svg`,
     viewBox: "0 0 860 564",
     seats: [
       { id: "seat-1", name: "Seat 1" },

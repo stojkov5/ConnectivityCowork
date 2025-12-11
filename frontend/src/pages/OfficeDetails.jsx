@@ -23,7 +23,7 @@ const OfficeDetails = () => {
         <Link to="/kiselavoda" className="office-image-link">
           <img
             className="office-image"
-            src="/Images/Location/KiselaVoda.webp"
+            src={`${import.meta.env.BASE_URL}Images/Location/KiselaVoda.webp`}
             alt={t("officeDetails.kiselaAlt")}
           />
           <p className="office-image-text">{t("officeDetails.kisela")}</p>
@@ -34,7 +34,7 @@ const OfficeDetails = () => {
         <Link to="/center" className="office-image-link">
           <img
             className="office-image"
-            src="/Images/Location/Centar.webp"
+            src={`${import.meta.env.BASE_URL}Images/Location/Centar.webp`}
             alt={t("officeDetails.centarAlt")}
           />
           <p className="office-image-text">{t("officeDetails.centar")}</p>

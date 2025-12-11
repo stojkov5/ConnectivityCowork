@@ -30,7 +30,7 @@ const FloorPlan = React.memo(
         }}
       >
         <img
-          src="/KiselaVoda.svg"
+           src={`${import.meta.env.BASE_URL}KiselaVoda.svg`}
           alt="Kisela Voda floor plan"
           style={{
             position: "absolute",

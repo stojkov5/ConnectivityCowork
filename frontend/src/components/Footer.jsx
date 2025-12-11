@@ -13,7 +13,7 @@ function Footer() {
         {/* Left: Logo */}
         <Col xs={24} sm={8} className="footer-logo-col  mb-2 sm:mb-0">
           <img
-            src="/Images/Logo2.png"
+             src={`${import.meta.env.BASE_URL}Images/Logo2.png`}
             alt="Logo"
             className="footer-logo text-center"
           />
