@@ -1,3 +1,4 @@
+// routes.jsx
 import { createBrowserRouter } from "react-router-dom";
 import Landing from "../src/pages/Landing";
 import OfficeDetails from "../src/pages/OfficeDetails";
@@ -11,48 +12,37 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminRoute from "./components/AdminRoute";
 import VerifyEmail from "./pages/VerifyEmail";
 import ConfirmReservation from "./pages/ConfirmReservation.jsx";
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Layout />,
-    children: [
-      { index: true, element: <Landing /> },
 
-      { path: "/contact", element: <ContactPage /> },
-      {
-        path: "/officedetails",
-        element: <OfficeDetails />,
-      },
-      {
-        path: "/kiselavoda",
-        element: <KiselaVodaOffice />,
-      },
-      {
-        path: "/center",
-        element: <CenterOffice />,
-      },
-      {
-        path: "/login",
-        element: <Login />,
-      },
-      {
-        path: "/register",
-        element: <Register />,
-      },
-      {
-        path: "/admin",
-        element: <AdminRoute />,
-        children: [
-          {
-            index: true,
-            element: <AdminDashboard />,
-          },
-        ],
-      },
-      { path: "/verify/:token", element: <VerifyEmail /> },
-      { path: "/confirm-reservation/:token", element: <ConfirmReservation /> },
-    ],
-  },
-]);
+const router = createBrowserRouter(
+  [
+    {
+      path: "/",
+      element: <Layout />,
+      children: [
+        { index: true, element: <Landing /> },
+        { path: "contact", element: <ContactPage /> },
+        { path: "officedetails", element: <OfficeDetails /> },
+        { path: "kiselavoda", element: <KiselaVodaOffice /> },
+        { path: "center", element: <CenterOffice /> },
+        { path: "login", element: <Login /> },
+        { path: "register", element: <Register /> },
+        {
+          path: "admin",
+          element: <AdminRoute />,
+          children: [{ index: true, element: <AdminDashboard /> }],
+        },
+        { path: "verify/:token", element: <VerifyEmail /> },
+        {
+          path: "confirm-reservation/:token",
+          element: <ConfirmReservation />,
+        },
+      ],
+    },
+  ],
+  {
+    // IMPORTANT for GitHub Pages project under /ConnectivityCowork
+    basename: "/ConnectivityCowork",
+  }
+);
 
 export default router;
