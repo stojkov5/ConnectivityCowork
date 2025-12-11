@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   // this stays, because your project is under /ConnectivityCowork/
-  base: "/ConnectivityCowork/",
+  base: "/",
 
   build: {
     // output *one level up* into /docs at the repo root
