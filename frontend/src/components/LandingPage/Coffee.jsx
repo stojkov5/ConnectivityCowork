@@ -28,15 +28,13 @@ const Coffee = () => {
 
             <Row justify="center" gutter={[32, 32]} align="middle">
               <Col md={12} className="w-full h-full">
-                <p className="coffee-paragraph py-auto">
-                  {t("coffee.p1")}
-                </p>
+                <p className="coffee-paragraph py-auto">{t("coffee.p1")}</p>
               </Col>
 
               <Col md={12}>
                 <div className="coffee-image-wrapper">
                   <img
-                    src="/Images/Coffee.webp"
+                    src={`${import.meta.env.BASE_URL}Images/Coffee.webp`}
                     alt={t("coffee.alt")}
                     className="coffee-image rounded-2xl"
                     loading="lazy"

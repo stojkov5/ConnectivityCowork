@@ -43,7 +43,9 @@ const Locations = () => {
             >
               <Link to="/officedetails" className="location-link">
                 <img
-                  src="/Images/Location/KiselaVoda.webp"
+                  src={`${
+                    import.meta.env.BASE_URL
+                  }Images/Location/KiselaVoda.webp`}
                   alt={t("locations.kiselaAlt")}
                   className="location-img"
                 />
@@ -64,7 +66,7 @@ const Locations = () => {
             >
               <Link to="/officedetails" className="location-link">
                 <img
-                  src="/Images/Location/Centar.webp"
+                  src={`${import.meta.env.BASE_URL}Images/Location/Centar.webp`}
                   alt={t("locations.centarAlt")}
                   className="location-img"
                 />

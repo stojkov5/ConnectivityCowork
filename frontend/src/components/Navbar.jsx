@@ -10,7 +10,7 @@ const LANGUAGES = [
   { code: "en", label: "EN" },
   { code: "fr", label: "FR" },
   { code: "ru", label: "RU" },
-  { code: "mk", label: "MK" }
+  { code: "mk", label: "MK" },
 ];
 
 const NavBar = () => {
@@ -32,8 +32,7 @@ const NavBar = () => {
     setLangMenuOpen(false);
   };
 
-  const currentLang =
-    i18n.resolvedLanguage || i18n.language || "en";
+  const currentLang = i18n.resolvedLanguage || i18n.language || "en";
 
   const renderDesktopNavLink = (to, labelKey, isHash = false) => {
     const base =
@@ -59,10 +58,7 @@ const NavBar = () => {
       <NavLink
         to={to}
         className={({ isActive }) =>
-          [
-            base,
-            isActive ? "text-[#ff8c00]" : ""
-          ].join(" ")
+          [base, isActive ? "text-[#ff8c00]" : ""].join(" ")
         }
       >
         <span className="relative inline-block pb-1">
@@ -85,13 +81,13 @@ const NavBar = () => {
                 {/* Desktop Logo */}
                 <img
                   className="hidden md:block w-40 xl:w-44"
-                  src="/Images/Logo1.png"
+                  src={`${import.meta.env.BASE_URL}Images/Logo1.png`}
                   alt="Desktop Logo"
                 />
                 {/* Mobile Logo */}
                 <img
                   className="md:hidden w-16"
-                  src="/Images/Logo2.png"
+                  src={`${import.meta.env.BASE_URL}Images/Logo2.png`}
                   alt="Mobile Logo"
                 />
               </NavLink>
@@ -163,7 +159,9 @@ const NavBar = () => {
                             type="button"
                             onClick={() => handleLanguageChange(lng.code)}
                             className={`w-full text-left px-3 py-2 text-[13px] font-semibold tracking-[0.12em] hover:bg-gray-100 ${
-                              currentLang === lng.code ? "text-[#ff8c00]" : "text-gray-800"
+                              currentLang === lng.code
+                                ? "text-[#ff8c00]"
+                                : "text-gray-800"
                             }`}
                           >
                             {lng.label}
@@ -201,7 +199,11 @@ const NavBar = () => {
           >
             <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100">
               <NavLink to="/" onClick={toggleMenu}>
-                <img className="w-20" src="/Images/Logo2.png" alt="Mobile Logo" />
+                <img
+                  className="w-20"
+                  src="/Images/Logo2.png"
+                  alt="Mobile Logo"
+                />
               </NavLink>
               <button
                 onClick={toggleMenu}
