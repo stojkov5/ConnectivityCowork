@@ -7,7 +7,7 @@ import { computeRange } from "../utils/dateRange.js";
 import {
   sendReservationConfirmationEmail,
   sendOwnerReservationNotificationEmail,
-} from "./utils/sendEmail.js";
+} from "../utils/sendEmail.js";
 
 const router = express.Router();
 
