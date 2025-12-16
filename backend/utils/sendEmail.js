@@ -56,14 +56,12 @@ export const sendVerificationEmail = async (toEmail, token) => {
   await sgMail.send(msg);
 };
 
-// ========== RESERVATION CONFIRMATION EMAIL ==========
-export const sendReservationConfirmationEmail = async (
-  toEmail,
-  token,
-  details
-) => {
+// ========== RESERVATION CONFIRMATION EMAIL (TO USER) ==========
+export const sendReservationConfirmationEmail = async (toEmail, token, details) => {
   if (!sendGridReady) {
-    console.log("[sendReservationConfirmationEmail] Missing configuration, skipping.");
+    console.log(
+      "[sendReservationConfirmationEmail] Missing configuration, skipping."
+    );
     return;
   }
 
@@ -84,8 +82,7 @@ export const sendReservationConfirmationEmail = async (
       ? resources.map((r) => `- ${r.name || r.id}`).join("<br/>")
       : "- (none)";
 
-  const prettyLocation =
-    location === "kiselavoda" ? "Kisela Voda" : "Centar";
+  const prettyLocation = location === "kiselavoda" ? "Kisela Voda" : "Centar";
 
   const msg = {
     to: toEmail,
@@ -115,4 +112,98 @@ export const sendReservationConfirmationEmail = async (
   };
 
   await sgMail.send(msg);
+};
+
+// ========== OWNER NOTIFICATION (AFTER USER CONFIRMS) ==========
+export const sendOwnerReservationNotificationEmail = async (ownerEmail, data) => {
+  if (!sendGridReady) {
+    console.log(
+      "[sendOwnerReservationNotificationEmail] Missing configuration, skipping."
+    );
+    return;
+  }
+
+  const {
+    reserverEmail,
+    reserverUsername,
+    companyName,
+    location,
+    officeId,
+    resourceType,
+    plan,
+    startDate,
+    endDate,
+    resources, // [{ id, name }]
+    createdAt,
+  } = data;
+
+  const prettyLocation = location === "kiselavoda" ? "Kisela Voda" : "Centar";
+
+  const resourceListText =
+    Array.isArray(resources) && resources.length
+      ? resources.map((r) => `- ${r.name || r.id}`).join("\n")
+      : "- (none)";
+
+  const resourceListHtml =
+    Array.isArray(resources) && resources.length
+      ? resources.map((r) => `<li>${r.name || r.id}</li>`).join("")
+      : "<li>(none)</li>";
+
+  const subject = `Notification: Reservation made ✅ (${prettyLocation} • ${officeId})`;
+
+  const text = [
+    "Notification: Reservation made",
+    "--------------------------------",
+    `Location: ${prettyLocation}`,
+    `OfficeId: ${officeId || "-"}`,
+    `Resource type: ${resourceType || "-"}`,
+    `Plan: ${plan || "-"}`,
+    `Dates: ${startDate} -> ${endDate}`,
+    "",
+    `User: ${reserverUsername || "-"}`,
+    `User email: ${reserverEmail || "-"}`,
+    `Company: ${companyName || "-"}`,
+    "",
+    "Resources:",
+    resourceListText,
+    "",
+    `Created at: ${createdAt || "-"}`,
+  ].join("\n");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.5;">
+      <h2 style="margin: 0 0 10px;">Notification: Reservation made ✅</h2>
+
+      <p style="margin: 0 0 10px;">
+        <strong>Location:</strong> ${prettyLocation}<br/>
+        <strong>OfficeId:</strong> ${officeId || "-"}<br/>
+        <strong>Resource type:</strong> ${resourceType || "-"}<br/>
+        <strong>Plan:</strong> ${plan || "-"}<br/>
+        <strong>Dates:</strong> ${startDate} → ${endDate}
+      </p>
+
+      <p style="margin: 0 0 10px;">
+        <strong>User:</strong> ${reserverUsername || "-"}<br/>
+        <strong>User email:</strong> ${reserverEmail || "-"}<br/>
+        <strong>Company:</strong> ${companyName || "-"}
+      </p>
+
+      <p style="margin: 0 0 6px;"><strong>Resources:</strong></p>
+      <ul style="margin-top: 0;">
+        ${resourceListHtml}
+      </ul>
+
+      <p style="margin: 10px 0 0; color:#666; font-size: 12px;">
+        Created at: ${createdAt || "-"}
+      </p>
+    </div>
+  `;
+
+  await sgMail.send({
+    to: ownerEmail,
+    from: SENDGRID_FROM_EMAIL, // MUST be verified in SendGrid
+    subject,
+    text,
+    html,
+  });
 };

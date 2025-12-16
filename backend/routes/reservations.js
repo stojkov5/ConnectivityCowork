@@ -1,43 +1,29 @@
 // backend/routes/reservations.js
 import express from "express";
 import crypto from "crypto";
-import Reservation from "../models/Reservation.js";
-import { verifyToken } from "../middleware/auth.js";
-import { computeRange } from "../utils/dateRange.js";
-import { sendReservationConfirmationEmail } from "../utils/sendEmail.js";
+import Reservation from "./models/Reservation.js";
+import { verifyToken } from "./middleware/auth.js";
+import { computeRange } from "./utils/dateRange.js";
+import {
+  sendReservationConfirmationEmail,
+  sendOwnerReservationNotificationEmail,
+} from "./utils/sendEmail.js";
 
 const router = express.Router();
 
-// ========== ADMIN: get all reservations (any status) ==========
-router.get("/admin/all", verifyToken, async (req, res) => {
-  try {
-    if (!req.user || !req.user.isAdmin) {
-      return res.status(403).json({ message: "Admin only" });
-    }
+const OWNER_EMAIL = "coworkkonnectivityskopje@gmail.com";
 
-    const reservations = await Reservation.find({})
-      .sort({ startDate: 1 })
-      .populate("user", "username email");
+// helper: resource display (optional)
+const makeResourceName = (resourceId) => resourceId;
 
-    res.json({ reservations });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-/**
- * GET /api/reservations
- * Optional query:
- *  - location=kiselavoda|centar
- *  - officeId=kiselavoda|centar|centar2
- * Only returns CONFIRMED reservations (used by booking UI).
- */
+// GET /api/reservations
+// Optional query: location, officeId
+// Returns CONFIRMED reservations
 router.get("/", async (req, res) => {
   try {
     const { location, officeId } = req.query;
-    const filter = { status: "confirmed" };
 
+    const filter = { status: "confirmed" };
     if (location) filter.location = location;
     if (officeId) filter.officeId = officeId;
 
@@ -49,24 +35,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-/**
- * POST /api/reservations
- * Body:
- * {
- *   location: "kiselavoda" | "centar",
- *   officeId: "kiselavoda" | "centar" | "centar2",
- *   resourceType: "room" | "seat",
- *   resourceIds: ["room-1", "room-2"],
- *   plan: "daily" | "weekly" | "monthly",
- *   startDate: "2025-11-25",
- *   companyName: "My Company"
- * }
- *
- * Requires Authorization: Bearer <token>
- *
- * Creates PENDING reservations and sends confirmation email.
- * Real blocking is only when user clicks the email link.
- */
+// POST /api/reservations
 router.post("/", verifyToken, async (req, res) => {
   try {
     const {
@@ -93,7 +62,7 @@ router.post("/", verifyToken, async (req, res) => {
 
     const { start, end } = computeRange(plan, startDate);
 
-    // Only check against CONFIRMED reservations
+    // check only CONFIRMED
     const conflicts = await Reservation.find({
       location,
       officeId,
@@ -111,9 +80,8 @@ router.post("/", verifyToken, async (req, res) => {
       });
     }
 
-    // One token per batch
     const confirmationToken = crypto.randomBytes(32).toString("hex");
-    const confirmationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+    const confirmationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const docs = resourceIds.map((id) => ({
       user: req.user._id,
@@ -122,6 +90,7 @@ router.post("/", verifyToken, async (req, res) => {
       officeId,
       resourceType,
       resourceId: id,
+      resourceName: makeResourceName(id),
       plan,
       startDate: start,
       endDate: end,
@@ -133,22 +102,22 @@ router.post("/", verifyToken, async (req, res) => {
 
     const created = await Reservation.insertMany(docs);
 
-    // Send confirmation email
+    // Send confirmation email to the USER (they must click)
     try {
       await sendReservationConfirmationEmail(req.user.email, confirmationToken, {
         location,
-        officeName: officeId, // you can improve this with real names if you want
+        officeName: officeId,
         plan,
         startDate: start.toISOString().slice(0, 10),
         endDate: end.toISOString().slice(0, 10),
-        companyName,
-        resources: resourceIds.map((id) => ({ id, name: id })),
+        companyName: companyName || "",
+        resources: resourceIds.map((id) => ({ id, name: makeResourceName(id) })),
       });
     } catch (e) {
       console.error("Error sending reservation confirmation email:", e);
     }
 
-    res.status(201).json({
+    return res.status(201).json({
       message:
         "Reservation request created. Please check your email to confirm the booking.",
       reservations: created,
@@ -159,21 +128,17 @@ router.post("/", verifyToken, async (req, res) => {
   }
 });
 
-/**
- * GET /api/reservations/confirm/:token
- * User clicks email link -> we confirm all pending reservations with that token.
- */
+// GET /api/reservations/confirm/:token
 router.get("/confirm/:token", async (req, res) => {
   try {
     const { token } = req.params;
-
     const now = new Date();
 
     const pending = await Reservation.find({
       confirmationToken: token,
       confirmationTokenExpires: { $gt: now },
       status: "pending",
-    });
+    }).populate("user", "username email");
 
     if (!pending || pending.length === 0) {
       return res
@@ -181,10 +146,9 @@ router.get("/confirm/:token", async (req, res) => {
         .json({ message: "Invalid or expired reservation confirmation link." });
     }
 
-    // Use first doc to get common values
     const sample = pending[0];
 
-    // Double-check conflicts against CONFIRMED reservations
+    // check conflicts again before confirming
     const conflicts = await Reservation.find({
       location: sample.location,
       officeId: sample.officeId,
@@ -196,7 +160,7 @@ router.get("/confirm/:token", async (req, res) => {
     });
 
     if (conflicts.length > 0) {
-      // Optionally delete pending ones
+      // remove pending batch
       await Reservation.deleteMany({ confirmationToken: token, status: "pending" });
 
       return res.status(409).json({
@@ -205,7 +169,7 @@ router.get("/confirm/:token", async (req, res) => {
       });
     }
 
-    // Confirm them
+    // confirm batch
     await Reservation.updateMany(
       { confirmationToken: token, status: "pending" },
       {
@@ -214,9 +178,29 @@ router.get("/confirm/:token", async (req, res) => {
       }
     );
 
-    return res.json({
-      message: "Reservation confirmed successfully.",
-    });
+    // ✅ OWNER notification (best-effort)
+    try {
+      await sendOwnerReservationNotificationEmail(OWNER_EMAIL, {
+        reserverEmail: sample.email || sample.user?.email,
+        reserverUsername: sample.user?.username,
+        companyName: sample.companyName,
+        location: sample.location,
+        officeId: sample.officeId,
+        resourceType: sample.resourceType,
+        plan: sample.plan,
+        startDate: sample.startDate?.toISOString?.().slice(0, 10),
+        endDate: sample.endDate?.toISOString?.().slice(0, 10),
+        resources: pending.map((r) => ({
+          id: r.resourceId,
+          name: r.resourceName || r.resourceId,
+        })),
+        createdAt: sample.createdAt?.toISOString?.(),
+      });
+    } catch (e) {
+      console.error("OWNER email failed:", e);
+    }
+
+    return res.json({ message: "Reservation confirmed successfully." });
   } catch (err) {
     console.error("GET /api/reservations/confirm/:token error:", err);
     res.status(500).json({ message: "Server error" });
