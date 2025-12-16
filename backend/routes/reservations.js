@@ -1,9 +1,9 @@
 // backend/routes/reservations.js
 import express from "express";
 import crypto from "crypto";
-import Reservation from "./models/Reservation.js";
-import { verifyToken } from "./middleware/auth.js";
-import { computeRange } from "./utils/dateRange.js";
+import Reservation from "../models/Reservation.js";
+import { verifyToken } from "../middleware/auth.js";
+import { computeRange } from "../utils/dateRange.js";
 import {
   sendReservationConfirmationEmail,
   sendOwnerReservationNotificationEmail,
@@ -104,15 +104,22 @@ router.post("/", verifyToken, async (req, res) => {
 
     // Send confirmation email to the USER (they must click)
     try {
-      await sendReservationConfirmationEmail(req.user.email, confirmationToken, {
-        location,
-        officeName: officeId,
-        plan,
-        startDate: start.toISOString().slice(0, 10),
-        endDate: end.toISOString().slice(0, 10),
-        companyName: companyName || "",
-        resources: resourceIds.map((id) => ({ id, name: makeResourceName(id) })),
-      });
+      await sendReservationConfirmationEmail(
+        req.user.email,
+        confirmationToken,
+        {
+          location,
+          officeName: officeId,
+          plan,
+          startDate: start.toISOString().slice(0, 10),
+          endDate: end.toISOString().slice(0, 10),
+          companyName: companyName || "",
+          resources: resourceIds.map((id) => ({
+            id,
+            name: makeResourceName(id),
+          })),
+        }
+      );
     } catch (e) {
       console.error("Error sending reservation confirmation email:", e);
     }
@@ -161,7 +168,10 @@ router.get("/confirm/:token", async (req, res) => {
 
     if (conflicts.length > 0) {
       // remove pending batch
-      await Reservation.deleteMany({ confirmationToken: token, status: "pending" });
+      await Reservation.deleteMany({
+        confirmationToken: token,
+        status: "pending",
+      });
 
       return res.status(409).json({
         message:
