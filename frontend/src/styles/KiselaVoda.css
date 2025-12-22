@@ -60,7 +60,10 @@ button:disabled {
   gap: 0.5rem !important;
   overflow: hidden !important;
 }
-.ant-tag {
-  overflow: scroll !important;
-  max-width: 100% !important;
+
+@media (max-width: 768px) {
+  .ant-tag {
+    overflow: scroll !important;
+    max-width: 100% !important;
+  }
 }
