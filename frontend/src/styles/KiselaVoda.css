@@ -54,3 +54,13 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+.ant-alert-message {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+  overflow: hidden !important;
+}
+.ant-tag {
+  overflow: scroll !important;
+  max-width: 100% !important;
+}

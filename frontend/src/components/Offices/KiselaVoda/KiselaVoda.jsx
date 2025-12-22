@@ -346,7 +346,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                       current && current < dayjs().startOf("day")
                     }
                     cellRender={dateRender}
-                    className="w-full"
+                    className="w-full text-base md:text-sm"
                     allowClear={false}
                     placeholder={t("kiselaVoda.datePlaceholder")}
                   />
