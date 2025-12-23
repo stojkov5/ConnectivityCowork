@@ -8,7 +8,7 @@ const Community = () => {
   const { t } = useTranslation();
 
   return (
-    <section id="community" className="py-5 raleway-300">
+    <section id="community" className="py-25 raleway-300">
       <Row
         justify="center"
         align="middle"

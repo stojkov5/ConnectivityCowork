@@ -97,7 +97,7 @@ const NavBar = () => {
             <Col lg={14} className="hidden lg:block">
               <ul className="flex justify-center items-center gap-6 xl:gap-8 text-black">
                 <li className="group">
-                  {renderDesktopNavLink("/#welcome", "nav.home", true)}
+                  {renderDesktopNavLink("/", "nav.home", true)}
                 </li>
                 <li className="group">
                   {renderDesktopNavLink("/#community", "nav.community", true)}
