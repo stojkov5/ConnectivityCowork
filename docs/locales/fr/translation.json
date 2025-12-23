@@ -142,14 +142,15 @@
 
     "meeting": {
       "title": "SALLE DE RÉUNION",
-      "description": "Environnement professionnel pour réunions (10–15 personnes).",
+      "description": "Environnement professionnel pour réunions.",
       "price": "3000 MKD / 4h • 6000 MKD / 8h",
       "details": [
         "Écran de présentation et HDMI.",
         "Tableau blanc et marqueurs.",
         "Connexion Wi-Fi.",
         "Café/thé inclus.",
-        "Parking privé disponible."
+        "Parking privé disponible.",
+        "10–15 personnes capacité."
       ]
     }
   },
@@ -178,6 +179,15 @@
     }
   },
   "kiselaVoda": {
+    "help": {
+      "selectDatePlanFirst": "Choisissez d’abord une date et une formule — ensuite, vous pourrez sélectionner des salles sur le plan.",
+      "mapClickable": "Astuce : cliquez sur le plan pour sélectionner des salles. Vert = disponible, Jaune = sélectionné, Rouge = réservé.",
+      "mustLogin": "Pour réserver, vous devez être connecté(e).",
+      "pickDate": "Choisissez une date.",
+      "pickPlan": "Choisissez une formule (journalière/hebdomadaire/mensuelle).",
+      "pickOnMap": "Sélectionnez au moins une salle sur le plan (cliquez sur une salle verte).",
+      "conflicts": "Votre sélection est en conflit avec des réservations existantes. Retirez les salles réservées ou changez la date/la formule."
+    },
     "title": "RÉSERVATIONS – KISELA VODA",
     "datePlaceholder": "Choisissez une date",
     "planPlaceholder": "Choisissez une formule",
@@ -211,6 +221,15 @@
     "errorGeneric": "Échec de la création de la réservation. Il est possible qu’il y ait un conflit."
   },
   "center": {
+    "help": {
+      "selectDatePlanFirst": "Choisissez d’abord une date et une formule — ensuite, vous pourrez sélectionner des places sur le plan.",
+      "mapClickable": "Astuce : cliquez sur le plan pour sélectionner des places. Vert = disponible, Jaune = sélectionné, Rouge = réservé.",
+      "mustLogin": "Pour réserver, vous devez être connecté(e).",
+      "pickDate": "Choisissez une date.",
+      "pickPlan": "Choisissez une formule (journalière/hebdomadaire/mensuelle).",
+      "pickOnMap": "Sélectionnez au moins une place sur le plan (cliquez sur une place verte).",
+      "conflicts": "Votre sélection est en conflit avec des réservations existantes. Retirez les places réservées ou changez la date/la formule."
+    },
     "title": "RÉSERVATIONS – CENTAR",
     "datePlaceholder": "Choisissez une date",
     "planPlaceholder": "Choisissez une formule",
@@ -263,5 +282,16 @@
     "companyLabel": "Entreprise / Organisation :",
     "companyPlaceholder": "Entrez le nom de l’entreprise / organisation",
     "conflictsMessage": "Certaines places sélectionnées ont des réservations en conflit."
+  },
+  "common": {
+    "login": "Connexion",
+    "register": "Inscription"
+  },
+  "legend": {
+    "title": "Légende",
+    "free": "Disponible",
+    "selected": "Sélectionné",
+    "booked": "Réservé",
+    "disabled": "Désactivé"
   }
 }
