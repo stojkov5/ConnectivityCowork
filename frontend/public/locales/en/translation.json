@@ -178,6 +178,15 @@
     }
   },
   "kiselaVoda": {
+    "help": {
+      "selectDatePlanFirst": "Choose a date and a plan first — then you can click rooms on the map.",
+      "mapClickable": "Tip: click on the map to select rooms. Green = free, Yellow = selected, Red = booked.",
+      "mustLogin": "To make a reservation you must be logged in.",
+      "pickDate": "Pick a date.",
+      "pickPlan": "Pick a plan (daily/weekly/monthly).",
+      "pickOnMap": "Select at least one room on the map (click a green room).",
+      "conflicts": "Your selection conflicts with existing bookings. Remove booked rooms or change date/plan."
+    },
     "title": "KISELA VODA BOOKINGS",
     "datePlaceholder": "Select a date",
     "planPlaceholder": "Select plan",
@@ -211,6 +220,15 @@
     "errorGeneric": "Failed to create reservation. Possibly a conflict."
   },
   "center": {
+    "help": {
+      "selectDatePlanFirst": "Choose a date and a plan first — then you can click seats on the map.",
+      "mapClickable": "Tip: click on the map to select seats. Green = free, Yellow = selected, Red = booked.",
+      "mustLogin": "To make a reservation you must be logged in.",
+      "pickDate": "Pick a date.",
+      "pickPlan": "Pick a plan (daily/weekly/monthly).",
+      "pickOnMap": "Select at least one seat on the map (click a green seat).",
+      "conflicts": "Your selection conflicts with existing bookings. Remove booked seats or change date/plan."
+    },
     "title": "CENTER BOOKINGS",
     "datePlaceholder": "Select a date",
     "planPlaceholder": "Select plan",
@@ -263,5 +281,16 @@
     "companyLabel": "Company / Organization:",
     "companyPlaceholder": "Enter company / organization name",
     "conflictsMessage": "Some selected seats have conflicting reservations."
+  },
+  "common": {
+    "login": "Login",
+    "register": "Register"
+  },
+  "legend": {
+    "title": "Legend",
+    "free": "Free",
+    "selected": "Selected",
+    "booked": "Booked",
+    "disabled": "Disabled"
   }
 }

@@ -54,6 +54,7 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
 .ant-alert-message {
   display: flex !important;
   flex-direction: column !important;
@@ -66,4 +67,151 @@ button:disabled {
     overflow: scroll !important;
     max-width: 100% !important;
   }
+}
+
+/* ===== Reserve UX helpers ===== */
+.reserve-help {
+  margin-top: 10px;
+}
+
+.reserve-help .ant-alert {
+  border-radius: 14px !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+}
+
+.reserve-help-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reserve-help-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  line-height: 1.35;
+}
+
+.reserve-help-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #ff8c00;
+  margin-top: 7px;
+  flex: 0 0 6px;
+}
+
+.reserve-help-link {
+  color: #ff8c00;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ===== Map hint + legend ===== */
+.map-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.map-hint .ant-alert {
+  border-radius: 14px !important;
+  border: 1px solid rgba(255, 140, 0, 0.18) !important;
+  background: rgba(255, 140, 0, 0.08) !important;
+}
+
+/* ===== Reserve button ===== */
+.reserve-btn {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+}
+
+.reserve-btn:hover:enabled {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+}
+
+.reserve-btn:active:enabled {
+  transform: translateY(0px);
+}
+
+.reserve-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ===== Map container highlight when selection is required ===== */
+.map-container {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.map-container.needs-selection {
+  border-color: rgba(255, 140, 0, 0.45);
+  box-shadow: 0 0 0 4px rgba(255, 140, 0, 0.18);
+}
+
+/* ===== Legend UI ===== */
+.legend-wrap {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 10px 12px;
+}
+
+.legend-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.legend-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.legend-free {
+  background: #4ade80;
+}
+
+.legend-selected {
+  background: #facc15;
+}
+
+.legend-booked {
+  background: #ef4444;
+}
+
+.legend-disabled {
+  background: #d1d5db;
 }

@@ -1,14 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
-import {
-  Row,
-  Col,
-  DatePicker,
-  Alert,
-  Tag,
-  message,
-  Select,
-  Button,
-} from "antd";
+import { Row, Col, DatePicker, Alert, Tag, message, Select } from "antd";
+import { Link } from "react-router-dom";
 import dayjs from "dayjs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -20,8 +12,9 @@ import { useAuth } from "../../../context/AuthContext.jsx";
 
 import { useTranslation } from "react-i18next";
 import "../../../styles/Centar.css";
+
 const base = import.meta.env.BASE_URL;
-// === offices data ===
+
 const offices = [
   {
     id: "centar",
@@ -91,9 +84,7 @@ const computeRange = (plan, selectedDate) => {
   if (!selectedDate) return null;
   const d = dayjs(selectedDate);
 
-  if (plan === "daily") {
-    return { start: normalizeDate(d), end: normalizeDate(d) };
-  }
+  if (plan === "daily") return { start: normalizeDate(d), end: normalizeDate(d) };
   if (plan === "weekly") {
     const s = d.startOf("day");
     const e = s.add(6, "day");
@@ -110,7 +101,7 @@ const computeRange = (plan, selectedDate) => {
 const rangesOverlap = (aStart, aEnd, bStart, bEnd) =>
   !(dayjs(aEnd).isBefore(dayjs(bStart)) || dayjs(aStart).isAfter(dayjs(bEnd)));
 
-const Center = ({ isLoggedInProp = null }) => {
+const Centar = ({ isLoggedInProp = null }) => {
   const { t } = useTranslation();
   const { token, user } = useAuth();
   const queryClient = useQueryClient();
@@ -131,15 +122,11 @@ const Center = ({ isLoggedInProp = null }) => {
     [activeOfficeId]
   );
 
-  // === load reservations for this office from backend ===
   const { data: reservations = [] } = useQuery({
     queryKey: ["reservations", "centar", activeOfficeId],
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/api/reservations`, {
-        params: {
-          location: "centar",
-          officeId: activeOfficeId,
-        },
+        params: { location: "centar", officeId: activeOfficeId },
       });
 
       return res.data.reservations.map((r) => ({
@@ -153,7 +140,6 @@ const Center = ({ isLoggedInProp = null }) => {
     },
   });
 
-  // === mutation for creating reservation (email-verified on backend) ===
   const createReservation = useMutation({
     mutationFn: async ({ seatIds, plan, startDate, companyName }) => {
       return axios.post(
@@ -167,11 +153,7 @@ const Center = ({ isLoggedInProp = null }) => {
           startDate,
           companyName,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
     },
     onSuccess: () => {
@@ -189,11 +171,7 @@ const Center = ({ isLoggedInProp = null }) => {
     },
   });
 
-  // range for current date + plan
-  const range =
-    selectedDate && selectedPlan
-      ? computeRange(selectedPlan, selectedDate)
-      : null;
+  const range = selectedDate && selectedPlan ? computeRange(selectedPlan, selectedDate) : null;
 
   const getConflictingReservationsForRange = useCallback(
     (seatId, rangeObj) => {
@@ -207,69 +185,42 @@ const Center = ({ isLoggedInProp = null }) => {
     [reservations]
   );
 
-  // === derive seats with status (disabled / free / selected / taken) ===
   const seatsWithStatus = useMemo(() => {
     if (!activeOffice) return [];
 
-    // Before date+plan => everything greyed out (disabled)
     if (!selectedDate || !selectedPlan) {
       return activeOffice.seats.map((seat) => ({
         ...seat,
         status: "disabled",
         bookedRanges: reservations
           .filter((r) => r.seatId === seat.id)
-          .map((r) => ({
-            start: r.startDate,
-            end: r.endDate,
-            type: r.type,
-          })),
+          .map((r) => ({ start: r.startDate, end: r.endDate, type: r.type })),
       }));
     }
 
-    // With date+plan => check for overlap conflicts
     return activeOffice.seats.map((seat) => {
       const conflicts = getConflictingReservationsForRange(seat.id, range);
 
       let status;
-      if (conflicts.length > 0) {
-        status = "taken"; // red, not clickable
-      } else if (selectedSeatIds.includes(seat.id)) {
-        status = "selected"; // yellow
-      } else {
-        status = "free"; // green
-      }
+      if (conflicts.length > 0) status = "taken";
+      else if (selectedSeatIds.includes(seat.id)) status = "selected";
+      else status = "free";
 
       return {
         ...seat,
         status,
         bookedRanges: reservations
           .filter((r) => r.seatId === seat.id)
-          .map((r) => ({
-            start: r.startDate,
-            end: r.endDate,
-            type: r.type,
-          })),
+          .map((r) => ({ start: r.startDate, end: r.endDate, type: r.type })),
       };
     });
-  }, [
-    activeOffice,
-    reservations,
-    selectedDate,
-    selectedPlan,
-    range,
-    selectedSeatIds,
-    getConflictingReservationsForRange,
-  ]);
+  }, [activeOffice, reservations, selectedDate, selectedPlan, range, selectedSeatIds, getConflictingReservationsForRange]);
 
   const selectedSeats = useMemo(
-    () =>
-      activeOffice
-        ? activeOffice.seats.filter((s) => selectedSeatIds.includes(s.id))
-        : [],
+    () => (activeOffice ? activeOffice.seats.filter((s) => selectedSeatIds.includes(s.id)) : []),
     [activeOffice, selectedSeatIds]
   );
 
-  // collect conflict details for selected seats
   const conflictDetails = useMemo(() => {
     if (!range) return [];
     const list = [];
@@ -289,12 +240,7 @@ const Center = ({ isLoggedInProp = null }) => {
       }
     }
     return list;
-  }, [
-    selectedSeatIds,
-    range,
-    activeOffice,
-    getConflictingReservationsForRange,
-  ]);
+  }, [selectedSeatIds, range, activeOffice, getConflictingReservationsForRange]);
 
   const hasConflicts = conflictDetails.length > 0;
 
@@ -306,9 +252,7 @@ const Center = ({ isLoggedInProp = null }) => {
     if (seat.status === "taken" || seat.status === "disabled") return;
 
     setSelectedSeatIds((prev) =>
-      prev.includes(seat.id)
-        ? prev.filter((id) => id !== seat.id)
-        : [...prev, seat.id]
+      prev.includes(seat.id) ? prev.filter((id) => id !== seat.id) : [...prev, seat.id]
     );
   };
 
@@ -346,11 +290,9 @@ const Center = ({ isLoggedInProp = null }) => {
     });
   };
 
-  // calendar color highlighting
   const dateRender = useCallback(
     (current) => {
       const formatted = current.format("YYYY-MM-DD");
-
       const reservationsForDay = reservations.filter((r) =>
         rangesOverlap(r.startDate, r.endDate, formatted, formatted)
       );
@@ -359,11 +301,7 @@ const Center = ({ isLoggedInProp = null }) => {
       const totalSeats = activeOffice ? activeOffice.seats.length : 0;
 
       if (bookedIds.size === totalSeats && totalSeats > 0) {
-        return (
-          <div className="calendar-dot bg-red-500 text-white">
-            {current.date()}
-          </div>
-        );
+        return <div className="calendar-dot bg-red-500 text-white">{current.date()}</div>;
       }
       if (bookedIds.size > 0) {
         return (
@@ -384,6 +322,98 @@ const Center = ({ isLoggedInProp = null }) => {
     selectedSeatIds.length === 0 ||
     hasConflicts;
 
+  const mapHint = useMemo(() => {
+    if (!selectedDate || !selectedPlan) {
+      return (
+        <Alert
+          type="info"
+          showIcon
+          className="rounded-md"
+          message={t("center.help.selectDatePlanFirst")}
+        />
+      );
+    }
+    return (
+      <Alert
+        type="success"
+        showIcon
+        className="rounded-md"
+        message={t("center.help.mapClickable")}
+      />
+    );
+  }, [selectedDate, selectedPlan, t]);
+
+  const reserveHelp = useMemo(() => {
+    const items = [];
+
+    if (!isAuthenticated) {
+      items.push(
+        <span key="auth">
+          {t("center.help.mustLogin")}{" "}
+          <Link className="reserve-help-link" to="/login">
+            {t("common.login")}
+          </Link>{" "}
+          /{" "}
+          <Link className="reserve-help-link" to="/register">
+            {t("common.register")}
+          </Link>
+        </span>
+      );
+    }
+
+    if (!selectedDate) items.push(t("center.help.pickDate"));
+    if (selectedDate && !selectedPlan) items.push(t("center.help.pickPlan"));
+    if (selectedDate && selectedPlan && selectedSeatIds.length === 0)
+      items.push(t("center.help.pickOnMap"));
+    if (hasConflicts) items.push(t("center.help.conflicts"));
+
+    if (items.length === 0) return null;
+
+    return (
+      <Alert
+        type={!isAuthenticated ? "warning" : "info"}
+        showIcon
+        className="rounded-md"
+        message={
+          <div className="reserve-help-list">
+            {items.map((x, idx) => (
+              <div key={idx} className="reserve-help-item">
+                <span className="reserve-help-dot" />
+                <span>{x}</span>
+              </div>
+            ))}
+          </div>
+        }
+      />
+    );
+  }, [isAuthenticated, selectedDate, selectedPlan, selectedSeatIds.length, hasConflicts, t]);
+
+  const needsSelection = !!selectedDate && !!selectedPlan && selectedSeatIds.length === 0;
+
+  const Legend = () => (
+    <div className="legend-wrap">
+      <div className="legend-title">{t("legend.title")}</div>
+      <div className="legend-items">
+        <div className="legend-item">
+          <span className="legend-swatch legend-free" />
+          <span>{t("legend.free")}</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-swatch legend-selected" />
+          <span>{t("legend.selected")}</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-swatch legend-booked" />
+          <span>{t("legend.booked")}</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-swatch legend-disabled" />
+          <span>{t("legend.disabled")}</span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="bg-gray-50 min-h-screen py-16 fade-in">
       <Row justify="center">
@@ -394,7 +424,7 @@ const Center = ({ isLoggedInProp = null }) => {
             </h2>
 
             <Row gutter={[24, 24]}>
-              {/* LEFT PANEL */}
+              {/* LEFT */}
               <Col xs={24} md={6}>
                 <div className="bg-white rounded-xl shadow-md p-5 space-y-5 card-hover flex flex-col gap-5">
                   <DatePicker
@@ -411,7 +441,6 @@ const Center = ({ isLoggedInProp = null }) => {
                     placeholder={t("center.datePlaceholder")}
                   />
 
-                  {/* Plan selector */}
                   <Select
                     value={selectedPlan}
                     onChange={setSelectedPlan}
@@ -425,39 +454,38 @@ const Center = ({ isLoggedInProp = null }) => {
                     ]}
                   />
 
-                  {/* Office selector */}
-                  <select
+                  {/* Floor / office selector */}
+                  <Select
                     value={activeOfficeId}
-                    onChange={(e) => {
-                      setActiveOfficeId(e.target.value);
+                    onChange={(v) => {
+                      setActiveOfficeId(v);
                       setSelectedSeatIds([]);
+                      setSelectedPlan(null); // important: avoid stale plan edge cases
                     }}
-                    className="w-full border rounded-md py-2 px-3 text-gray-700 focus:ring-2 focus:ring-orange-500"
-                  >
-                    {offices.map((o) => (
-                      <option key={o.id} value={o.id}>
-                        {t(`center.offices.${o.id}`)}
-                      </option>
-                    ))}
-                  </select>
+                    style={{ width: "100%" }}
+                    options={offices.map((o) => ({
+                      value: o.id,
+                      label: t(`center.offices.${o.id}`, o.name),
+                    }))}
+                  />
 
-                  {/* Reserve button */}
+                  <div className="map-hint">
+                    {mapHint}
+                    <Legend />
+                  </div>
+
                   <button
-                    className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="reserve-btn bg-orange-500 text-white"
                     disabled={reserveDisabled}
                     onClick={handleOpenModal}
                   >
                     {t("center.reserveButton")}
                   </button>
 
-                  {/* Conflict alert */}
+                  {reserveDisabled && <div className="reserve-help">{reserveHelp}</div>}
+
                   {hasConflicts && range && (
-                    <Alert
-                      type="error"
-                      showIcon
-                      className="rounded-md"
-                      message={t("center.conflictAlert")}
-                    />
+                    <Alert type="error" showIcon className="rounded-md" message={t("center.conflictAlert")} />
                   )}
 
                   {selectedDate && (
@@ -467,26 +495,15 @@ const Center = ({ isLoggedInProp = null }) => {
                         <>
                           {selectedDate.format("YYYY-MM-DD")}
                           <Tag color="blue" className="ml-2">
-                            {
-                              seatsWithStatus.filter((x) => x.status === "free")
-                                .length
-                            }{" "}
+                            {seatsWithStatus.filter((x) => x.status === "free").length}{" "}
                             {t("center.status.free")}
                           </Tag>
                           <Tag color="gold" className="ml-2">
-                            {
-                              seatsWithStatus.filter(
-                                (x) => x.status === "selected"
-                              ).length
-                            }{" "}
+                            {seatsWithStatus.filter((x) => x.status === "selected").length}{" "}
                             {t("center.status.selected")}
                           </Tag>
                           <Tag color="red" className="ml-2">
-                            {
-                              seatsWithStatus.filter(
-                                (x) => x.status === "taken"
-                              ).length
-                            }{" "}
+                            {seatsWithStatus.filter((x) => x.status === "taken").length}{" "}
                             {t("center.status.booked")}
                           </Tag>
                         </>
@@ -500,9 +517,7 @@ const Center = ({ isLoggedInProp = null }) => {
                     onClick={() => setShowOverview((prev) => !prev)}
                     className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm"
                   >
-                    {showOverview
-                      ? t("center.overview.hide")
-                      : t("center.overview.show")}
+                    {showOverview ? t("center.overview.hide") : t("center.overview.show")}
                   </button>
 
                   {showOverview && (
@@ -517,9 +532,9 @@ const Center = ({ isLoggedInProp = null }) => {
                 </div>
               </Col>
 
-              {/* RIGHT PANEL */}
+              {/* RIGHT */}
               <Col xs={24} md={18}>
-                <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+                <div className={`map-container ${needsSelection ? "needs-selection" : ""}`}>
                   <FloorPlan
                     office={activeOffice}
                     seats={seatsWithStatus}
@@ -535,7 +550,6 @@ const Center = ({ isLoggedInProp = null }) => {
               </Col>
             </Row>
 
-            {/* Summary / email verification modal */}
             <ReservationModal
               open={modalOpen}
               onClose={() => setModalOpen(false)}
@@ -557,4 +571,4 @@ const Center = ({ isLoggedInProp = null }) => {
   );
 };
 
-export default Center;
+export default Centar;
