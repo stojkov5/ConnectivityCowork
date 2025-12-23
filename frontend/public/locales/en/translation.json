@@ -142,14 +142,15 @@
 
     "meeting": {
       "title": "MEETING ROOM",
-      "description": "Professional meeting environment (10–15 people).",
+      "description": "Professional meeting environment",
       "price": "3000 MKD / 4h • 6000 MKD / 8h",
       "details": [
         "Presentation screen & HDMI.",
         "Whiteboard & markers.",
         "Wi-Fi connection.",
         "Coffee/tea included.",
-        "Private parking available."
+        "Private parking available.",
+        "10-15 people capacity."
       ]
     }
   },

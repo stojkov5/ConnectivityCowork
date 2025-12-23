@@ -142,14 +142,15 @@
 
     "meeting": {
       "title": "SALLE DE RÉUNION",
-      "description": "Environnement professionnel pour réunions (10–15 personnes).",
+      "description": "Environnement professionnel pour réunions.",
       "price": "3000 MKD / 4h • 6000 MKD / 8h",
       "details": [
         "Écran de présentation et HDMI.",
         "Tableau blanc et marqueurs.",
         "Connexion Wi-Fi.",
         "Café/thé inclus.",
-        "Parking privé disponible."
+        "Parking privé disponible.",
+        "10–15 personnes capacité."
       ]
     }
   },

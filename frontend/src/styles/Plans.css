@@ -1,10 +1,10 @@
-.booking-header {
-  color: #f97316; /* same orange accent as the Intro */
+.plans-scope .booking-header {
+  color: #f97316;
   letter-spacing: 0.05em;
   margin-bottom: 1.5rem;
 }
 
-.booking-card {
+.plans-scope .booking-card {
   height: 100%;
   border-radius: 14px;
   overflow: hidden;
@@ -15,28 +15,33 @@
   text-align: center;
 }
 
-.booking-card:hover {
+.plans-scope .booking-card:hover {
   transform: translateY(-6px);
   box-shadow: 0 8px 25px rgba(255, 140, 0, 0.25);
 }
 
-.booking-card .icon {
+.plans-scope .booking-card .icon {
   font-size: 36px;
   margin-bottom: 10px;
 }
 
-.booking-price {
+.plans-scope .booking-price {
   color: #ff8c00;
   font-size: 1.2rem;
   margin: 0.8rem 0;
 }
-.booking-button {
-   background: #ff8c00;
+
+.plans-scope .booking-button {
+  background: #ff8c00;
   color: white;
   transition: 0.3s ease;
-
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
-.booking-button:hover {
+
+.plans-scope .booking-button:hover {
   background: #e67a00;
   transform: translateY(-2px);
   color: white;

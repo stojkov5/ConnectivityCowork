@@ -23,32 +23,11 @@ const Plans = () => {
     meeting: <CoffeeOutlined />
   };
 
-  // Fallback data (translated through i18n)
   const fallbackCardData = [
-    {
-      key: "daily",
-      title: t("plans.daily.title"),
-      price: t("plans.daily.price"),
-      color: "#ff8c00"
-    },
-    {
-      key: "weekly",
-      title: t("plans.weekly.title"),
-      price: t("plans.weekly.price"),
-      color: "#ffb84d"
-    },
-    {
-      key: "monthly",
-      title: t("plans.monthly.title"),
-      price: t("plans.monthly.price"),
-      color: "#ff8c00"
-    },
-    {
-      key: "meeting",
-      title: t("plans.meeting.title"),
-      price: t("plans.meeting.price"),
-      color: "#ff8c00"
-    }
+    { key: "daily", title: t("plans.daily.title"), price: t("plans.daily.price"), color: "#ff8c00" },
+    { key: "weekly", title: t("plans.weekly.title"), price: t("plans.weekly.price"), color: "#ffb84d" },
+    { key: "monthly", title: t("plans.monthly.title"), price: t("plans.monthly.price"), color: "#ff8c00" },
+    { key: "meeting", title: t("plans.meeting.title"), price: t("plans.meeting.price"), color: "#ff8c00" }
   ];
 
   const { data, isLoading, isError } = useQuery({
@@ -60,55 +39,45 @@ const Plans = () => {
   });
 
   const plans =
-    !isError && Array.isArray(data) && data.length > 0
-      ? data
-      : fallbackCardData;
+    !isError && Array.isArray(data) && data.length > 0 ? data : fallbackCardData;
 
   return (
-    <div className="booking-container container mx-auto py-5">
-      <div className="booking-header">
-        <h2 className="text-4xl md:text-5xl font-semibold mb-6 tracking-wide raleway-600">
-          {t("plans.title")}
-        </h2>
-        {isLoading && (
-          <p className="text-gray-500 text-sm">{t("plans.loading")}</p>
-        )}
-      </div>
+    <section className="plans-scope">
+      <div className="booking-container container mx-auto py-5">
+        <div className="booking-header text-center">
+          <h2 className="text-4xl md:text-5xl font-semibold mb-6 tracking-wide raleway-600">
+            {t("plans.title")}
+          </h2>
+          {isLoading && <p className="text-gray-500 text-sm">{t("plans.loading")}</p>}
+        </div>
 
-      <Row gutter={[16, 16]} justify="center">
-        <Col span={22}>
-          <Row gutter={[16, 16]} justify="center">
-            {plans.map((plan) => (
-              <Col xs={24} sm={12} md={12} lg={6} key={plan.key || plan.title}>
-                <div className="booking-card">
-                  <div className="card-content">
-                    <div
-                      className="icon"
-                      style={{ color: plan.color || "#ff8c00" }}
-                    >
-                      {iconByKey[plan.key] || <CalendarOutlined />}
+        <Row gutter={[16, 16]} justify="center">
+          <Col span={22}>
+            <Row gutter={[16, 16]} justify="center">
+              {plans.map((plan) => (
+                <Col xs={24} sm={12} md={12} lg={6} key={plan.key || plan.title}>
+                  <div className="booking-card">
+                    <div className="card-content">
+                      <div className="icon" style={{ color: plan.color || "#ff8c00" }}>
+                        {iconByKey[plan.key] || <CalendarOutlined />}
+                      </div>
+
+                      <h3 className="raleway-600">{plan.title}</h3>
+
+                      <h2 className="booking-price raleway-600 pb-3">{plan.price}</h2>
+
+                      <Link to="/officedetails" className="booking-button rounded-full p-3">
+                        <button type="button">{t("plans.viewDetails")}</button>
+                      </Link>
                     </div>
-
-                    <h3 className="raleway-600">{plan.title}</h3>
-
-                    <h2 className="booking-price raleway-600 pb-3">
-                      {plan.price}
-                    </h2>
-
-                    <Link
-                      to="/officedetails"
-                      className="booking-button rounded-full p-3"
-                    >
-                      <button>{t("plans.viewDetails")}</button>
-                    </Link>
                   </div>
-                </div>
-              </Col>
-            ))}
-          </Row>
-        </Col>
-      </Row>
-    </div>
+                </Col>
+              ))}
+            </Row>
+          </Col>
+        </Row>
+      </div>
+    </section>
   );
 };
 

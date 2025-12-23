@@ -1,25 +1,33 @@
-.booking-container {
+/* src/styles/TypeOfBooking.css */
+
+/* ===========================
+   SCOPE (prevents conflicts)
+=========================== */
+.type-booking-scope .booking-container {
   color: #333;
- 
 }
 
-.booking-header {
+.type-booking-scope .booking-header {
   text-align: center;
   margin-bottom: 3rem;
 }
 
-.booking-header h1 {
+.type-booking-scope .booking-header h1 {
   font-size: 2rem;
   color: #ff8c00;
   font-weight: 700;
 }
 
-.booking-header p {
+.type-booking-scope .booking-header p {
   color: #777;
   font-size: 1.1rem;
+  margin-top: 0.35rem;
 }
 
-.booking-card {
+/* ===========================
+   CARD LAYOUT (alignment fix)
+=========================== */
+.type-booking-scope .booking-card {
   height: 100%;
   border-radius: 14px;
   overflow: hidden;
@@ -28,39 +36,125 @@
   transition: all 0.3s ease;
   padding: 1.5rem;
   text-align: center;
+
+  display: flex;
+  flex-direction: column;
 }
 
-.booking-card:hover {
+.type-booking-scope .booking-card:hover {
   transform: translateY(-6px);
   box-shadow: 0 8px 25px rgba(255, 140, 0, 0.25);
 }
 
-.booking-card .icon {
+.type-booking-scope .card-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Icon */
+.type-booking-scope .booking-card .icon {
   font-size: 36px;
   margin-bottom: 10px;
 }
 
-.booking-price {
-  color: #ff8c00;
-  font-size: 1.2rem;
-  margin: 0.8rem 0;
-}
-.custom-tag {
-  display: inline-flex;
+/* Title: give it stable height so cards line up */
+.type-booking-scope .card-content h3 {
+  min-height: 48px; /* tweak if your titles are longer */
+  display: flex;
   align-items: center;
-  gap: 6px;
-  color: #fff;
-  font-size: 0.9rem;
-  padding: 6px 10px;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  transition: all 0.3s ease;
+  justify-content: center;
+  margin: 0 0 10px;
+  text-align: center;
 }
 
-.custom-tag .tag-icon {
+/* ===========================
+   TAG (the main culprit)
+=========================== */
+
+/* Reserve fixed space for tag area so price starts same Y */
+.type-booking-scope .tag-slot {
+  width: 100%;
+  min-height: 44px; /* tweak 40-52 if needed */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.type-booking-scope .custom-tag {
+  width: 100%;
+  max-width: 320px;
+  height: 40px; /* fixed height = stable alignment */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  color: #fff;
+  font-size: 0.9rem;
+  padding: 0 12px;
+  border-radius: 8px;
+
+  line-height: 1;
+  text-align: center;
+
+  /* keep single-line so it doesn't change card height */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.type-booking-scope .custom-tag .tag-icon {
   display: flex;
   align-items: center;
   font-size: 1rem;
+  flex: 0 0 auto;
 }
 
+.type-booking-scope .custom-tag .tag-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
+/* ===========================
+   PRICE (also stabilize)
+=========================== */
+.type-booking-scope .booking-price {
+  color: #ff8c00;
+  font-size: 1.2rem;
+  margin: 8px 0 12px;
+
+  min-height: 32px; /* keeps baseline consistent */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* List */
+.type-booking-scope .card-content ul {
+  width: 100%;
+  margin: 0;
+  padding-left: 18px;
+  text-align: left;
+}
+
+.type-booking-scope .card-content li {
+  margin-bottom: 8px;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+/* ===========================
+   Responsive tweaks
+=========================== */
+@media (max-width: 576px) {
+  .type-booking-scope .booking-header h1 {
+    font-size: 1.7rem;
+  }
+
+  .type-booking-scope .custom-tag {
+    max-width: 100%;
+  }
+}
