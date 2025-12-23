@@ -2,7 +2,7 @@
 import express from "express";
 import crypto from "crypto";
 import Reservation from "../models/Reservation.js";
-import { verifyToken } from "../middleware/auth.js";
+import { verifyToken, requireAdmin } from "../middleware/auth.js";
 import { computeRange } from "../utils/dateRange.js";
 import {
   sendReservationConfirmationEmail,
@@ -15,6 +15,23 @@ const OWNER_EMAIL = "coworkkonnectivityskopje@gmail.com";
 
 // helper: resource display (optional)
 const makeResourceName = (resourceId) => resourceId;
+
+/**
+ * ✅ ADMIN: GET /api/reservations/admin/all
+ * Returns ALL reservations (pending + confirmed + cancelled)
+ */
+router.get("/admin/all", verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const reservations = await Reservation.find()
+      .sort({ createdAt: -1 })
+      .populate("user", "username email");
+
+    res.json({ reservations });
+  } catch (err) {
+    console.error("GET /api/reservations/admin/all error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // GET /api/reservations
 // Optional query: location, officeId
