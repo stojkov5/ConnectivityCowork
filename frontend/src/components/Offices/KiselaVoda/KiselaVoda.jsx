@@ -5,7 +5,6 @@ import dayjs from "dayjs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
-import BookingOverview from "./BookingOverview";
 import FloorPlan from "./FloorPlan";
 import ReservationModal from "./ReservationModal";
 import { useAuth } from "../../../context/AuthContext.jsx";
@@ -14,8 +13,9 @@ import { useTranslation } from "react-i18next";
 import "../../../styles/KiselaVoda.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
+const base = import.meta.env.BASE_URL;
 
-const initialRooms = [
+const ROOMS = [
   { id: "room-1", name: "Room 1" },
   { id: "room-2", name: "Room 2" },
   { id: "room-3", name: "Room 3" },
@@ -26,6 +26,28 @@ const initialRooms = [
   { id: "room-8", name: "Room 8" },
 ];
 
+// 3 floors (you said these exist in /public)
+const offices = [
+  {
+    id: "kiselavoda-1",
+    name: "Kisela Voda - Floor 1",
+    svg: `${base}KiselaVoda.svg`,
+    rooms: ROOMS,
+  },
+  {
+    id: "kiselavoda-2",
+    name: "Kisela Voda - Floor 2",
+    svg: `${base}KiselaVoda-2.svg`,
+    rooms: ROOMS,
+  },
+  {
+    id: "kiselavoda-3",
+    name: "Kisela Voda - Floor 3",
+    svg: `${base}KiselaVoda-3.svg`,
+    rooms: ROOMS,
+  },
+];
+
 const normalizeDate = (d) => dayjs(d).format("YYYY-MM-DD");
 
 const computeRange = (plan, selectedDate) => {
@@ -33,16 +55,19 @@ const computeRange = (plan, selectedDate) => {
   const d = dayjs(selectedDate);
 
   if (plan === "daily") return { start: normalizeDate(d), end: normalizeDate(d) };
+
   if (plan === "weekly") {
     const s = d.startOf("day");
     const e = s.add(6, "day");
     return { start: normalizeDate(s), end: normalizeDate(e) };
   }
+
   if (plan === "monthly") {
     const s = d.startOf("month");
     const e = d.endOf("month");
     return { start: normalizeDate(s), end: normalizeDate(e) };
   }
+
   return null;
 };
 
@@ -60,16 +85,23 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedRoomIds, setSelectedRoomIds] = useState([]);
-  const [showOverview, setShowOverview] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
 
-  // === load reservations for KISELA VODA ===
+  // ✅ now Kisela has floors, same pattern as Centar
+  const [activeOfficeId, setActiveOfficeId] = useState("kiselavoda-1");
+
+  const activeOffice = useMemo(
+    () => offices.find((o) => o.id === activeOfficeId),
+    [activeOfficeId]
+  );
+
+  // === load reservations per floor ===
   const { data: reservations = [] } = useQuery({
-    queryKey: ["reservations", "kiselavoda"],
+    queryKey: ["reservations", "kiselavoda", activeOfficeId],
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/api/reservations`, {
-        params: { location: "kiselavoda", officeId: "kiselavoda" },
+        params: { location: "kiselavoda", officeId: activeOfficeId },
       });
 
       return res.data.reservations.map((r) => ({
@@ -81,16 +113,17 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
         endDate: dayjs(r.endDate).format("YYYY-MM-DD"),
       }));
     },
+    enabled: !!activeOfficeId,
   });
 
-  // === create reservation ===
+  // === create reservation (per floor) ===
   const createReservation = useMutation({
     mutationFn: async ({ roomIds, plan, startDate, companyName }) => {
       return axios.post(
         `${API_URL}/api/reservations`,
         {
           location: "kiselavoda",
-          officeId: "kiselavoda",
+          officeId: activeOfficeId,
           resourceType: "room",
           resourceIds: roomIds,
           plan,
@@ -102,7 +135,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     },
     onSuccess: () => {
       message.success(t("reservation.success"));
-      queryClient.invalidateQueries(["reservations", "kiselavoda"]);
+      queryClient.invalidateQueries(["reservations", "kiselavoda", activeOfficeId]);
       setSelectedRoomIds([]);
       setSelectedPlan(null);
       setCompanyName("");
@@ -114,8 +147,8 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     },
   });
 
-  // range for current date + plan
-  const range = selectedDate && selectedPlan ? computeRange(selectedPlan, selectedDate) : null;
+  const range =
+    selectedDate && selectedPlan ? computeRange(selectedPlan, selectedDate) : null;
 
   const getConflictingReservationsForRange = useCallback(
     (roomId, rangeObj) => {
@@ -129,10 +162,11 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     [reservations]
   );
 
-  // === rooms with status ===
   const roomsWithStatus = useMemo(() => {
+    const roomList = activeOffice?.rooms || ROOMS;
+
     if (!selectedDate || !selectedPlan) {
-      return initialRooms.map((room) => ({
+      return roomList.map((room) => ({
         ...room,
         status: "disabled",
         bookedRanges: reservations
@@ -141,7 +175,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
       }));
     }
 
-    return initialRooms.map((room) => {
+    return roomList.map((room) => {
       const conflicts = getConflictingReservationsForRange(room.id, range);
 
       let status;
@@ -157,18 +191,28 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
           .map((r) => ({ start: r.startDate, end: r.endDate, type: r.type })),
       };
     });
-  }, [reservations, selectedDate, selectedPlan, range, selectedRoomIds, getConflictingReservationsForRange]);
+  }, [
+    activeOffice,
+    reservations,
+    selectedDate,
+    selectedPlan,
+    range,
+    selectedRoomIds,
+    getConflictingReservationsForRange,
+  ]);
 
-  const selectedRooms = useMemo(
-    () => initialRooms.filter((room) => selectedRoomIds.includes(room.id)),
-    [selectedRoomIds]
-  );
+  const selectedRooms = useMemo(() => {
+    const roomList = activeOffice?.rooms || ROOMS;
+    return roomList.filter((room) => selectedRoomIds.includes(room.id));
+  }, [activeOffice, selectedRoomIds]);
 
   const conflictDetails = useMemo(() => {
     if (!range) return [];
+    const roomList = activeOffice?.rooms || ROOMS;
+
     const list = [];
     for (const roomId of selectedRoomIds) {
-      const room = initialRooms.find((r) => r.id === roomId);
+      const room = roomList.find((r) => r.id === roomId);
       const conflicts = getConflictingReservationsForRange(roomId, range);
       if (conflicts.length > 0) {
         list.push({
@@ -183,7 +227,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
       }
     }
     return list;
-  }, [selectedRoomIds, range, getConflictingReservationsForRange]);
+  }, [selectedRoomIds, range, activeOffice, getConflictingReservationsForRange]);
 
   const hasConflicts = conflictDetails.length > 0;
 
@@ -233,12 +277,12 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     });
   };
 
-  // calendar color highlighting
   const dateRender = useCallback(
     (current) => {
       const formatted = current.format("YYYY-MM-DD");
+      const roomList = activeOffice?.rooms || ROOMS;
 
-      const allTaken = initialRooms.every((room) =>
+      const allTaken = roomList.every((room) =>
         reservations.some(
           (r) =>
             r.roomId === room.id &&
@@ -248,7 +292,9 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
 
       const partiallyTaken =
         !allTaken &&
-        reservations.some((r) => rangesOverlap(r.startDate, r.endDate, formatted, formatted));
+        reservations.some((r) =>
+          rangesOverlap(r.startDate, r.endDate, formatted, formatted)
+        );
 
       if (allTaken) {
         return <div className="calendar-dot bg-red-500 text-white">{current.date()}</div>;
@@ -262,7 +308,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
       }
       return <div className="calendar-dot text-gray-700">{current.date()}</div>;
     },
-    [reservations]
+    [reservations, activeOffice]
   );
 
   const reserveDisabled =
@@ -272,7 +318,6 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     selectedRoomIds.length === 0 ||
     hasConflicts;
 
-  // ✅ Helpful map hint
   const mapHint = useMemo(() => {
     if (!selectedDate || !selectedPlan) {
       return (
@@ -294,7 +339,6 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     );
   }, [selectedDate, selectedPlan, t]);
 
-  // ✅ Reserve helper (why disabled)
   const reserveHelp = useMemo(() => {
     const items = [];
 
@@ -317,7 +361,6 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
     if (selectedDate && !selectedPlan) items.push(t("kiselaVoda.help.pickPlan"));
     if (selectedDate && selectedPlan && selectedRoomIds.length === 0)
       items.push(t("kiselaVoda.help.pickOnMap"));
-
     if (hasConflicts) items.push(t("kiselaVoda.help.conflicts"));
 
     if (items.length === 0) return null;
@@ -407,6 +450,21 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                     ]}
                   />
 
+                  {/* ✅ Floor selector */}
+                  <Select
+                    value={activeOfficeId}
+                    onChange={(v) => {
+                      setActiveOfficeId(v);
+                      setSelectedRoomIds([]);
+                      setSelectedPlan(null);
+                    }}
+                    style={{ width: "100%" }}
+                    options={offices.map((o) => ({
+                      value: o.id,
+                      label: t(`kiselaVoda.offices.${o.id}`, o.name),
+                    }))}
+                  />
+
                   <div className="map-hint">
                     {mapHint}
                     <Legend />
@@ -423,7 +481,12 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                   {reserveDisabled && <div className="reserve-help">{reserveHelp}</div>}
 
                   {hasConflicts && range && (
-                    <Alert type="error" showIcon className="rounded-md" message={t("kiselaVoda.conflictAlert")} />
+                    <Alert
+                      type="error"
+                      showIcon
+                      className="rounded-md"
+                      message={t("kiselaVoda.conflictAlert")}
+                    />
                   )}
 
                   {selectedDate && (
@@ -450,19 +513,6 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
                       showIcon
                     />
                   )}
-
-                  <button
-                    onClick={() => setShowOverview((prev) => !prev)}
-                    className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm"
-                  >
-                    {showOverview ? t("kiselaVoda.overview.hide") : t("kiselaVoda.overview.show")}
-                  </button>
-
-                  {showOverview && (
-                    <div className="max-h-[480px] overflow-y-auto border-t pt-3">
-                      <BookingOverview reservations={reservations} rooms={initialRooms} />
-                    </div>
-                  )}
                 </div>
               </Col>
 
@@ -470,6 +520,7 @@ const KiselaVoda = ({ isLoggedInProp = null }) => {
               <Col xs={24} md={18}>
                 <div className={`map-container ${needsSelection ? "needs-selection" : ""}`}>
                   <FloorPlan
+                    office={activeOffice}
                     rooms={roomsWithStatus}
                     onRoomClick={handleRoomClick}
                     statusColors={{

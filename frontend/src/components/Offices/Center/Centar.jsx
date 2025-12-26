@@ -112,7 +112,7 @@ const Centar = ({ isLoggedInProp = null }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedSeatIds, setSelectedSeatIds] = useState([]);
-  const [showOverview, setShowOverview] = useState(false);
+ 
   const [companyName, setCompanyName] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [activeOfficeId, setActiveOfficeId] = useState("centar");
@@ -513,22 +513,7 @@ const Centar = ({ isLoggedInProp = null }) => {
                     />
                   )}
 
-                  <button
-                    onClick={() => setShowOverview((prev) => !prev)}
-                    className="w-full bg-orange-500 text-white rounded-md py-2.5 font-medium hover:bg-orange-600 transition duration-300 shadow-sm"
-                  >
-                    {showOverview ? t("center.overview.hide") : t("center.overview.show")}
-                  </button>
-
-                  {showOverview && (
-                    <div className="max-h-[480px] overflow-y-auto border-t pt-3">
-                      <BookingOverview
-                        reservations={reservations}
-                        seats={activeOffice?.seats || []}
-                        showDelete={false}
-                      />
-                    </div>
-                  )}
+                 
                 </div>
               </Col>
 
