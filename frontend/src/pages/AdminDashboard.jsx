@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Table, Divider, Typography, Tag, Input, Button, message } from "antd";
+import { Table, Divider, Typography, Tag, Input, Button, message, Popconfirm, Space } from "antd";
 import dayjs from "dayjs";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -54,7 +54,7 @@ const AdminDashboard = () => {
     enabled: hasToken && isAdmin,
   });
 
-  // RESERVATIONS
+  // RESERVATIONS (ALL)
   const {
     data: reservationsData = [],
     isLoading: reservationsLoading,
@@ -68,6 +68,97 @@ const AdminDashboard = () => {
       return res.data.reservations;
     },
     enabled: hasToken && isAdmin,
+  });
+
+  // ✅ WAITING (awaiting_approval)
+  const {
+    data: waitingData = [],
+    isLoading: waitingLoading,
+    error: waitingError,
+  } = useQuery({
+    queryKey: ["admin-waiting-reservations"],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/api/reservations/admin/waiting`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.reservations;
+    },
+    enabled: hasToken && isAdmin,
+  });
+
+  // Group waiting items by groupId so admin approves whole batch (one click)
+  const waitingGroups = useMemo(() => {
+    const map = new Map();
+    for (const r of waitingData) {
+      const key = r.groupId || "NO_GROUP";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(r);
+    }
+
+    const rows = [];
+    for (const [groupId, list] of map.entries()) {
+      const first = list[0];
+      rows.push({
+        key: groupId,
+        groupId,
+        email: first.email,
+        username: first.user?.username || "-",
+        location: first.location,
+        officeId: first.officeId,
+        resourceType: first.resourceType,
+        plan: first.plan,
+        startDate: first.startDate,
+        endDate: first.endDate,
+        companyName: first.companyName || "",
+        resources: list.map((x) => x.resourceName || x.resourceId),
+        count: list.length,
+        userConfirmedAt: first.userConfirmedAt || first.updatedAt || first.createdAt,
+      });
+    }
+
+    return rows.sort((a, b) => new Date(b.userConfirmedAt) - new Date(a.userConfirmedAt));
+  }, [waitingData]);
+
+  // ✅ APPROVE
+  const approveBatch = useMutation({
+    mutationFn: async (groupId) => {
+      return axios.post(
+        `${API_URL}/api/reservations/admin/approve/${groupId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    },
+    onSuccess: (res) => {
+      message.success(res.data?.message || "Approved");
+      queryClient.invalidateQueries({ queryKey: ["admin-waiting-reservations"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-reservations"] });
+      // refresh calendars / offices
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
+    },
+    onError: (err) => {
+      const msg = err.response?.data?.message || "Approve failed";
+      message.error(msg);
+    },
+  });
+
+  // ✅ REJECT
+  const rejectBatch = useMutation({
+    mutationFn: async ({ groupId, reason }) => {
+      return axios.post(
+        `${API_URL}/api/reservations/admin/reject/${groupId}`,
+        { reason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    },
+    onSuccess: (res) => {
+      message.success(res.data?.message || "Rejected");
+      queryClient.invalidateQueries({ queryKey: ["admin-waiting-reservations"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-reservations"] });
+    },
+    onError: (err) => {
+      const msg = err.response?.data?.message || "Reject failed";
+      message.error(msg);
+    },
   });
 
   // PLANS
@@ -154,6 +245,25 @@ const AdminDashboard = () => {
       key: "email",
     },
     {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (s) => {
+        const color =
+          s === "confirmed"
+            ? "green"
+            : s === "awaiting_approval"
+            ? "gold"
+            : s === "pending"
+            ? "blue"
+            : s === "rejected"
+            ? "red"
+            : "default";
+        return <Tag color={color}>{String(s || "").toUpperCase()}</Tag>;
+      },
+      responsive: ["sm"],
+    },
+    {
       title: "Location",
       dataIndex: "location",
       key: "location",
@@ -223,6 +333,120 @@ const AdminDashboard = () => {
       key: "createdAt",
       render: (v) => dayjs(v).format("YYYY-MM-DD HH:mm"),
       responsive: ["lg"],
+    },
+  ];
+
+  const waitingColumns = [
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+    },
+    {
+      title: "User",
+      dataIndex: "username",
+      key: "username",
+      responsive: ["md"],
+    },
+    {
+      title: "Location",
+      dataIndex: "location",
+      key: "location",
+      render: (loc) =>
+        loc === "centar"
+          ? "Centar"
+          : loc === "kiselavoda"
+          ? "Kisela Voda"
+          : loc,
+    },
+    {
+      title: "Office",
+      dataIndex: "officeId",
+      key: "officeId",
+      responsive: ["sm"],
+    },
+    {
+      title: "Type",
+      dataIndex: "resourceType",
+      key: "resourceType",
+      render: (v) =>
+        v === "room" ? (
+          <Tag color="geekblue">ROOM</Tag>
+        ) : (
+          <Tag color="green">SEAT</Tag>
+        ),
+      responsive: ["sm"],
+    },
+    {
+      title: "Resources",
+      key: "resources",
+      render: (_, record) => (
+        <span>
+          <Tag>{record.count}</Tag>{" "}
+          {record.resources.slice(0, 3).join(", ")}
+          {record.resources.length > 3 ? "..." : ""}
+        </span>
+      ),
+    },
+    {
+      title: "Plan",
+      dataIndex: "plan",
+      key: "plan",
+      render: (plan) => {
+        const color =
+          plan === "daily" ? "blue" : plan === "weekly" ? "purple" : "orange";
+        return <Tag color={color}>{plan.toUpperCase()}</Tag>;
+      },
+    },
+    {
+      title: "From",
+      dataIndex: "startDate",
+      key: "startDate",
+      render: (d) => dayjs(d).format("YYYY-MM-DD"),
+    },
+    {
+      title: "To",
+      dataIndex: "endDate",
+      key: "endDate",
+      render: (d) => dayjs(d).format("YYYY-MM-DD"),
+      responsive: ["sm"],
+    },
+    {
+      title: "Confirmed by user",
+      dataIndex: "userConfirmedAt",
+      key: "userConfirmedAt",
+      render: (d) => (d ? dayjs(d).format("YYYY-MM-DD HH:mm") : "-"),
+      responsive: ["md"],
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, record) => (
+        <Space wrap>
+          <Popconfirm
+            title="Approve this reservation batch?"
+            onConfirm={() => approveBatch.mutate(record.groupId)}
+            okText="Approve"
+            cancelText="Cancel"
+          >
+            <Button type="primary" size="small" loading={approveBatch.isPending}>
+              Approve
+            </Button>
+          </Popconfirm>
+
+          <Popconfirm
+            title="Reject this reservation batch?"
+            onConfirm={() => rejectBatch.mutate({ groupId: record.groupId, reason: "Rejected by admin" })}
+            okText="Reject"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true }}
+          >
+            <Button danger size="small" loading={rejectBatch.isPending}>
+              Reject
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
     },
   ];
 
@@ -311,6 +535,27 @@ const AdminDashboard = () => {
               size="small"
               scroll={{ x: true }}
               pagination={{ pageSize: 10 }}
+            />
+          </div>
+        </div>
+
+        {/* ✅ WAITING RESERVATIONS */}
+        <Divider>Waiting Reservations (Admin approval)</Divider>
+        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-8 sm:mb-12">
+          {waitingError && (
+            <div className="mb-2 text-red-500 text-sm">
+              {waitingError.response?.data?.message || waitingError.message}
+            </div>
+          )}
+          <div className="w-full overflow-x-auto">
+            <Table
+              rowKey="groupId"
+              dataSource={waitingGroups}
+              columns={waitingColumns}
+              loading={waitingLoading}
+              size="small"
+              scroll={{ x: true }}
+              pagination={{ pageSize: 20 }}
             />
           </div>
         </div>

@@ -67,20 +67,44 @@ const reservationSchema = new mongoose.Schema(
       default: "",
     },
 
-    // NEW: reservation confirmation status
+    /**
+     * reservation status flow:
+     * 1) pending            -> created, user must confirm from email
+     * 2) awaiting_approval  -> user confirmed, admin must approve
+     * 3) confirmed          -> approved by admin, now shows in calendar
+     */
     status: {
       type: String,
-      enum: ["pending", "confirmed", "cancelled"],
+      enum: [
+        "pending",
+        "awaiting_approval",
+        "confirmed",
+        "cancelled",
+        "rejected",
+      ],
       default: "pending",
     },
 
-    // NEW: email confirmation token (one token per batch)
+    // email confirmation token (one token per batch)
     confirmationToken: {
       type: String,
     },
     confirmationTokenExpires: {
       type: Date,
     },
+
+    // ✅ NEW: groups the whole batch for admin actions (approve/reject all seats/rooms together)
+    groupId: {
+      type: String,
+    },
+
+    // metadata (optional, doesn’t break anything)
+    userConfirmedAt: { type: Date },
+    approvedAt: { type: Date },
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    rejectedAt: { type: Date },
+    rejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    rejectionReason: { type: String, default: "" },
   },
   { timestamps: true }
 );

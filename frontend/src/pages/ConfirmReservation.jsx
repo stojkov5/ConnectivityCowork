@@ -21,7 +21,10 @@ const ConfirmReservation = () => {
         );
         if (!isMounted) return;
         setStatus("success");
-        setMessage(res.data?.message || "Reservation confirmed.");
+        setMessage(
+          res.data?.message ||
+            "Reservation confirmed. Now waiting for admin approval."
+        );
       } catch (err) {
         if (!isMounted) return;
         setStatus("error");
@@ -52,7 +55,7 @@ const ConfirmReservation = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Result
           status="success"
-          title="Reservation confirmed!"
+          title="Reservation verified!"
           subTitle={message}
           extra={
             <Link to="/">
