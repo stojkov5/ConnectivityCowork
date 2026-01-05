@@ -1,11 +1,25 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Table, Divider, Typography, Tag, Input, Button, message, Popconfirm, Space } from "antd";
+import {
+  Table,
+  Divider,
+  Typography,
+  Tag,
+  Input,
+  Button,
+  message,
+  Popconfirm,
+  Space,
+  Collapse,
+  Badge,
+} from "antd";
 import dayjs from "dayjs";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const { Title } = Typography;
+const { Panel } = Collapse;
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 // Inline editor for plan price
@@ -116,7 +130,9 @@ const AdminDashboard = () => {
       });
     }
 
-    return rows.sort((a, b) => new Date(b.userConfirmedAt) - new Date(a.userConfirmedAt));
+    return rows.sort(
+      (a, b) => new Date(b.userConfirmedAt) - new Date(a.userConfirmedAt)
+    );
   }, [waitingData]);
 
   // ✅ APPROVE
@@ -132,7 +148,6 @@ const AdminDashboard = () => {
       message.success(res.data?.message || "Approved");
       queryClient.invalidateQueries({ queryKey: ["admin-waiting-reservations"] });
       queryClient.invalidateQueries({ queryKey: ["admin-reservations"] });
-      // refresh calendars / offices
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
     },
     onError: (err) => {
@@ -189,7 +204,7 @@ const AdminDashboard = () => {
     onSuccess: () => {
       message.success("Plan updated");
       queryClient.invalidateQueries({ queryKey: ["admin-plans"] });
-      queryClient.invalidateQueries({ queryKey: ["plans"] }); // public Plans.jsx
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
     },
     onError: (err) => {
       const msg = err.response?.data?.message || "Failed to update plan price";
@@ -197,7 +212,7 @@ const AdminDashboard = () => {
     },
   });
 
-  // SEED PLANS (one-time)
+  // SEED PLANS
   const seedPlans = useMutation({
     mutationFn: async () => {
       return axios.post(
@@ -218,7 +233,6 @@ const AdminDashboard = () => {
   });
 
   // TABLE COLUMNS
-
   const userColumns = [
     { title: "Username", dataIndex: "username", key: "username" },
     { title: "Email", dataIndex: "email", key: "email" },
@@ -337,11 +351,7 @@ const AdminDashboard = () => {
   ];
 
   const waitingColumns = [
-    {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-    },
+    { title: "Email", dataIndex: "email", key: "email" },
     {
       title: "User",
       dataIndex: "username",
@@ -359,12 +369,7 @@ const AdminDashboard = () => {
           ? "Kisela Voda"
           : loc,
     },
-    {
-      title: "Office",
-      dataIndex: "officeId",
-      key: "officeId",
-      responsive: ["sm"],
-    },
+    { title: "Office", dataIndex: "officeId", key: "officeId", responsive: ["sm"] },
     {
       title: "Type",
       dataIndex: "resourceType",
@@ -436,7 +441,12 @@ const AdminDashboard = () => {
 
           <Popconfirm
             title="Reject this reservation batch?"
-            onConfirm={() => rejectBatch.mutate({ groupId: record.groupId, reason: "Rejected by admin" })}
+            onConfirm={() =>
+              rejectBatch.mutate({
+                groupId: record.groupId,
+                reason: "Rejected by admin",
+              })
+            }
             okText="Reject"
             cancelText="Cancel"
             okButtonProps={{ danger: true }}
@@ -451,16 +461,8 @@ const AdminDashboard = () => {
   ];
 
   const planColumns = [
-    {
-      title: "Key",
-      dataIndex: "key",
-      key: "key",
-    },
-    {
-      title: "Title",
-      dataIndex: "title",
-      key: "title",
-    },
+    { title: "Key", dataIndex: "key", key: "key" },
+    { title: "Title", dataIndex: "title", key: "title" },
     {
       title: "Price",
       dataIndex: "price",
@@ -495,6 +497,44 @@ const AdminDashboard = () => {
     },
   ];
 
+  // ✅ Split reservations into Upcoming/Current vs Past
+  const today = dayjs().startOf("day");
+
+  const confirmedReservations = useMemo(() => {
+    // we only care about confirmed for these “Upcoming/Past” tables
+    return (reservationsData || []).filter((r) => r.status === "confirmed");
+  }, [reservationsData]);
+
+  const upcomingOrCurrent = useMemo(() => {
+    return confirmedReservations
+      .filter((r) => dayjs(r.endDate).isSame(today, "day") || dayjs(r.endDate).isAfter(today))
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+  }, [confirmedReservations, today]);
+
+  const past = useMemo(() => {
+    return confirmedReservations
+      .filter((r) => dayjs(r.endDate).isBefore(today))
+      .sort((a, b) => new Date(b.endDate) - new Date(a.endDate));
+  }, [confirmedReservations, today]);
+
+  // Group past by month to keep accordion clean
+  const pastByMonth = useMemo(() => {
+    const map = new Map();
+    for (const r of past) {
+      const key = dayjs(r.endDate).format("YYYY-MM"); // month bucket
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(r);
+    }
+    // Convert to sorted list (newest month first)
+    return Array.from(map.entries())
+      .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+      .map(([key, list]) => ({
+        key,
+        title: dayjs(key + "-01").format("MMMM YYYY"),
+        items: list,
+      }));
+  }, [past]);
+
   if (!hasToken || !isAdmin) {
     return (
       <div className="min-h-screen pt-24 px-4 sm:px-6 bg-gray-50">
@@ -518,7 +558,34 @@ const AdminDashboard = () => {
           Admin Dashboard
         </Title>
 
-        {/* USERS */}
+        {/* 1) WAITING APPROVAL */}
+        <Divider>
+          Waiting Approval{" "}
+          <Badge
+            count={waitingGroups.length}
+            style={{ backgroundColor: "#faad14" }}
+          />
+        </Divider>
+        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-8 sm:mb-12">
+          {waitingError && (
+            <div className="mb-2 text-red-500 text-sm">
+              {waitingError.response?.data?.message || waitingError.message}
+            </div>
+          )}
+          <div className="w-full overflow-x-auto">
+            <Table
+              rowKey="groupId"
+              dataSource={waitingGroups}
+              columns={waitingColumns}
+              loading={waitingLoading}
+              size="small"
+              scroll={{ x: true }}
+              pagination={{ pageSize: 20 }}
+            />
+          </div>
+        </div>
+
+        {/* 2) REGISTERED USERS */}
         <Divider>Registered Users</Divider>
         <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-8 sm:mb-12">
           {usersError && (
@@ -539,29 +606,14 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* ✅ WAITING RESERVATIONS */}
-        <Divider>Waiting Reservations (Admin approval)</Divider>
-        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-8 sm:mb-12">
-          {waitingError && (
-            <div className="mb-2 text-red-500 text-sm">
-              {waitingError.response?.data?.message || waitingError.message}
-            </div>
-          )}
-          <div className="w-full overflow-x-auto">
-            <Table
-              rowKey="groupId"
-              dataSource={waitingGroups}
-              columns={waitingColumns}
-              loading={waitingLoading}
-              size="small"
-              scroll={{ x: true }}
-              pagination={{ pageSize: 20 }}
-            />
-          </div>
-        </div>
-
-        {/* RESERVATIONS */}
-        <Divider>All Reservations</Divider>
+        {/* 3) UPCOMING / CURRENT CONFIRMED RESERVATIONS */}
+        <Divider>
+          Reservations (Upcoming / Current){" "}
+          <Badge
+            count={upcomingOrCurrent.length}
+            style={{ backgroundColor: "#52c41a" }}
+          />
+        </Divider>
         <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-8 sm:mb-12">
           {reservationsError && (
             <div className="mb-2 text-red-500 text-sm">
@@ -572,7 +624,7 @@ const AdminDashboard = () => {
           <div className="w-full overflow-x-auto">
             <Table
               rowKey="_id"
-              dataSource={reservationsData}
+              dataSource={upcomingOrCurrent}
               columns={reservationColumns}
               loading={reservationsLoading}
               size="small"
@@ -582,7 +634,43 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* PLANS */}
+        {/* 4) PAST RESERVATIONS (ACCORDION) */}
+        <Divider>
+          Past Reservations{" "}
+          <Badge count={past.length} style={{ backgroundColor: "#8c8c8c" }} />
+        </Divider>
+        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-8 sm:mb-12">
+          {pastByMonth.length === 0 ? (
+            <div className="text-gray-500 text-sm">No past reservations.</div>
+          ) : (
+            <Collapse accordion>
+              {pastByMonth.map((group) => (
+                <Panel
+                  header={
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                      <span>{group.title}</span>
+                      <Tag>{group.items.length}</Tag>
+                    </div>
+                  }
+                  key={group.key}
+                >
+                  <div className="w-full overflow-x-auto">
+                    <Table
+                      rowKey="_id"
+                      dataSource={group.items}
+                      columns={reservationColumns}
+                      size="small"
+                      scroll={{ x: true }}
+                      pagination={{ pageSize: 15 }}
+                    />
+                  </div>
+                </Panel>
+              ))}
+            </Collapse>
+          )}
+        </div>
+
+        {/* 5) PLANS */}
         <Divider>Plans & Pricing</Divider>
         <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-4">

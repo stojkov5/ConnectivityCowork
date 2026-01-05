@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { NavLink } from "react-router-dom";
 import { FiMenu, FiX } from "react-icons/fi";
 import { Row, Col } from "antd";
 import { HashLink } from "react-router-hash-link";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTranslation } from "react-i18next";
+
+// ✅ NEW
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 
 const LANGUAGES = [
   { code: "en", label: "EN" },
@@ -13,11 +17,17 @@ const LANGUAGES = [
   { code: "mk", label: "MK" },
 ];
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const NavBar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
 
-  const { isLoggedIn, user, logout } = useAuth();
+  // ✅ token might exist in your auth context; fallback to localStorage so it never breaks
+  const { isLoggedIn, user, logout, token } = useAuth();
+  const authToken =
+    token || localStorage.getItem("token") || localStorage.getItem("accessToken");
+
   const { t, i18n } = useTranslation();
 
   const toggleMenu = () => setMenuOpen((prev) => !prev);
@@ -33,6 +43,30 @@ const NavBar = () => {
   };
 
   const currentLang = i18n.resolvedLanguage || i18n.language || "en";
+
+  // ✅ NEW: fetch waiting approvals count for admins
+  const {
+    data: waitingReservations = [],
+  } = useQuery({
+    queryKey: ["admin-waiting-reservations-navbar"],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/api/reservations/admin/waiting`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      return res.data?.reservations || [];
+    },
+    enabled: !!authToken && !!user?.isAdmin,
+    refetchInterval: 30000, // refresh every 30s so badge stays up to date
+  });
+
+  // ✅ Count approval "batches" by unique groupId (same way your dashboard approves)
+  const waitingBatchCount = useMemo(() => {
+    if (!Array.isArray(waitingReservations) || waitingReservations.length === 0) return 0;
+    const set = new Set(
+      waitingReservations.map((r) => r.groupId || r._id) // fallback if groupId missing
+    );
+    return set.size;
+  }, [waitingReservations]);
 
   const renderDesktopNavLink = (to, labelKey, isHash = false) => {
     const base =
@@ -64,6 +98,41 @@ const NavBar = () => {
         <span className="relative inline-block pb-1">
           {label}
           <span className={underline} />
+        </span>
+      </NavLink>
+    );
+  };
+
+  // ✅ NEW: Dashboard link with red notification circle
+  const renderDashboardDesktopLink = () => {
+    const base =
+      "group relative tracking-[0.12em] text-[15px] xl:text-[16px] font-semibold transition-colors duration-200 hover:text-[#ff8c00]";
+
+    const underline =
+      "pointer-events-none absolute left-0 -bottom-0.5 h-[2px] w-0 bg-[#ff8c00] transition-all duration-300 group-hover:w-full";
+
+    return (
+      <NavLink
+        to="/admin"
+        className={({ isActive }) =>
+          [base, isActive ? "text-[#ff8c00]" : ""].join(" ")
+        }
+      >
+        <span className="relative inline-flex items-center gap-2 pb-1">
+          <span className="relative inline-block">
+            {t("nav.dashboard")}
+            <span className={underline} />
+          </span>
+
+          {waitingBatchCount > 0 && (
+            <span
+              className="inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[11px] font-bold leading-none"
+              style={{ width: 18, height: 18 }}
+              title={`${waitingBatchCount} waiting approvals`}
+            >
+              {waitingBatchCount > 9 ? "9+" : waitingBatchCount}
+            </span>
+          )}
         </span>
       </NavLink>
     );
@@ -111,7 +180,7 @@ const NavBar = () => {
 
                 {user?.isAdmin && (
                   <li className="group">
-                    {renderDesktopNavLink("/admin", "nav.dashboard")}
+                    {renderDashboardDesktopLink()}
                   </li>
                 )}
               </ul>
@@ -199,11 +268,7 @@ const NavBar = () => {
           >
             <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100">
               <NavLink to="/" onClick={toggleMenu}>
-                <img
-                  className="w-20"
-                  src="/Images/Logo2.png"
-                  alt="Mobile Logo"
-                />
+                <img className="w-20" src="/Images/Logo2.png" alt="Mobile Logo" />
               </NavLink>
               <button
                 onClick={toggleMenu}
@@ -225,6 +290,7 @@ const NavBar = () => {
                   {t("nav.home")}
                 </HashLink>
               </li>
+
               <li>
                 <HashLink
                   smooth
@@ -235,6 +301,7 @@ const NavBar = () => {
                   {t("nav.community")}
                 </HashLink>
               </li>
+
               <li>
                 <NavLink
                   to="/contact"
@@ -244,6 +311,7 @@ const NavBar = () => {
                   {t("nav.contact")}
                 </NavLink>
               </li>
+
               <li>
                 <NavLink
                   to="/officedetails"
@@ -259,9 +327,19 @@ const NavBar = () => {
                   <NavLink
                     to="/admin"
                     onClick={toggleMenu}
-                    className="block py-1 tracking-[0.16em] hover:text-[#ff8c00] transition-colors duration-200"
+                    className="flex items-center justify-between py-1 tracking-[0.16em] hover:text-[#ff8c00] transition-colors duration-200"
                   >
-                    {t("nav.dashboard")}
+                    <span>{t("nav.dashboard")}</span>
+
+                    {waitingBatchCount > 0 && (
+                      <span
+                        className="inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[12px] font-bold leading-none"
+                        style={{ width: 20, height: 20 }}
+                        title={`${waitingBatchCount} waiting approvals`}
+                      >
+                        {waitingBatchCount > 9 ? "9+" : waitingBatchCount}
+                      </span>
+                    )}
                   </NavLink>
                 </li>
               )}
