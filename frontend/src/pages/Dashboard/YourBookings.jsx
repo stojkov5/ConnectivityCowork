@@ -1,5 +1,5 @@
 import React from "react";
-import { Table, Tag, Alert } from "antd";
+import { Table, Tag, Alert, Row, Col } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import dayjs from "dayjs";
@@ -74,17 +74,24 @@ const YourBookings = () => {
   }
 
   return (
-    <div style={{ padding: 32 }}>
-      <h2 style={{ marginBottom: 20 }}>Your Bookings</h2>
+    <Row justify="center" align="middle" className="h-lvh">
+      <Col xs={24} sm={22}>
+        <h2
+          className="text-3xl text-center font-semibold mb-6 raleway-600"
+          style={{ color: "#ff8c00" }}
+        >
+          YOUR BOOKINGS
+        </h2>
 
-      <Table
-        rowKey="_id"
-        loading={isLoading}
-        columns={columns}
-        dataSource={data || []}
-        pagination={{ pageSize: 5 }}
-      />
-    </div>
+        <Table className="overflow-x-auto "
+          rowKey="_id"
+          loading={isLoading}
+          columns={columns}
+          dataSource={data || []}
+          pagination={{ pageSize: 5 }}
+        />
+      </Col>
+    </Row>
   );
 };
 
