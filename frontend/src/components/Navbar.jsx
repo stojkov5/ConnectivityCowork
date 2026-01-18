@@ -6,7 +6,6 @@ import { HashLink } from "react-router-hash-link";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTranslation } from "react-i18next";
 
-// ✅ NEW
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
@@ -23,7 +22,6 @@ const NavBar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
 
-  // ✅ token might exist in your auth context; fallback to localStorage so it never breaks
   const { isLoggedIn, user, logout, token } = useAuth();
   const authToken =
     token || localStorage.getItem("token") || localStorage.getItem("accessToken");
@@ -44,11 +42,9 @@ const NavBar = () => {
 
   const currentLang = i18n.resolvedLanguage || i18n.language || "en";
 
-  // ✅ NEW: fetch waiting approvals count for admins
-  const {
-    data: waitingReservations = [],
-  } = useQuery({
-    queryKey: ["admin-waiting-reservations-navbar"],
+  // ADMIN notification badge
+  const { data: waitingReservations = [] } = useQuery({
+    queryKey: ["admin-waiting-reservations"],
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/api/reservations/admin/waiting`, {
         headers: { Authorization: `Bearer ${authToken}` },
@@ -56,15 +52,13 @@ const NavBar = () => {
       return res.data?.reservations || [];
     },
     enabled: !!authToken && !!user?.isAdmin,
-    refetchInterval: 30000, // refresh every 30s so badge stays up to date
+    refetchInterval: 30000,
   });
 
-  // ✅ Count approval "batches" by unique groupId (same way your dashboard approves)
   const waitingBatchCount = useMemo(() => {
-    if (!Array.isArray(waitingReservations) || waitingReservations.length === 0) return 0;
-    const set = new Set(
-      waitingReservations.map((r) => r.groupId || r._id) // fallback if groupId missing
-    );
+    if (!Array.isArray(waitingReservations) || waitingReservations.length === 0)
+      return 0;
+    const set = new Set(waitingReservations.map((r) => r.groupId || r._id));
     return set.size;
   }, [waitingReservations]);
 
@@ -103,7 +97,30 @@ const NavBar = () => {
     );
   };
 
-  // ✅ NEW: Dashboard link with red notification circle
+  // ✅ Reservations link (user)
+  const renderReservationsDesktopLink = () => {
+    const base =
+      "group relative tracking-[0.12em] text-[15px] xl:text-[16px] font-semibold transition-colors duration-200 hover:text-[#ff8c00]";
+
+    const underline =
+      "pointer-events-none absolute left-0 -bottom-0.5 h-[2px] w-0 bg-[#ff8c00] transition-all duration-300 group-hover:w-full";
+
+    return (
+      <NavLink
+        to="/dashboard/reservations"
+        className={({ isActive }) =>
+          [base, isActive ? "text-[#ff8c00]" : ""].join(" ")
+        }
+      >
+        <span className="relative inline-block pb-1">
+          {t("nav.reservations", { defaultValue: "RESERVATIONS" })}
+          <span className={underline} />
+        </span>
+      </NavLink>
+    );
+  };
+
+  // Admin dashboard link with badge
   const renderDashboardDesktopLink = () => {
     const base =
       "group relative tracking-[0.12em] text-[15px] xl:text-[16px] font-semibold transition-colors duration-200 hover:text-[#ff8c00]";
@@ -147,13 +164,11 @@ const NavBar = () => {
             {/* Logo */}
             <Col xs={12} lg={4}>
               <NavLink to="/">
-                {/* Desktop Logo */}
                 <img
                   className="hidden md:block w-40 xl:w-44"
                   src={`${import.meta.env.BASE_URL}Images/Logo1.png`}
                   alt="Desktop Logo"
                 />
-                {/* Mobile Logo */}
                 <img
                   className="md:hidden w-16"
                   src={`${import.meta.env.BASE_URL}Images/Logo2.png`}
@@ -165,31 +180,25 @@ const NavBar = () => {
             {/* Desktop Links */}
             <Col lg={14} className="hidden lg:block">
               <ul className="flex justify-center items-center gap-6 xl:gap-8 text-black">
-                <li className="group">
-                  {renderDesktopNavLink("/", "nav.home", true)}
-                </li>
+                <li className="group">{renderDesktopNavLink("/", "nav.home", true)}</li>
                 <li className="group">
                   {renderDesktopNavLink("/#community", "nav.community", true)}
                 </li>
-                <li className="group">
-                  {renderDesktopNavLink("/contact", "nav.contact")}
-                </li>
+                <li className="group">{renderDesktopNavLink("/contact", "nav.contact")}</li>
                 <li className="group">
                   {renderDesktopNavLink("/officedetails", "nav.spaces")}
                 </li>
 
-                {user?.isAdmin && (
-                  <li className="group">
-                    {renderDashboardDesktopLink()}
-                  </li>
-                )}
+                {/* ✅ NEW */}
+                {isLoggedIn && <li className="group">{renderReservationsDesktopLink()}</li>}
+
+                {user?.isAdmin && <li className="group">{renderDashboardDesktopLink()}</li>}
               </ul>
             </Col>
 
-            {/* Desktop Right Side (Login + Language) & Mobile Hamburger */}
+            {/* Desktop Right Side & Mobile Hamburger */}
             <Col xs={12} lg={6}>
               <div className="flex justify-end items-center gap-3">
-                {/* DESKTOP login/logout + language */}
                 <div className="hidden lg:flex items-center gap-3 relative">
                   {!isLoggedIn && (
                     <NavLink
@@ -209,7 +218,7 @@ const NavBar = () => {
                     </button>
                   )}
 
-                  {/* DESKTOP Language dropdown */}
+                  {/* Language dropdown */}
                   <div className="relative">
                     <button
                       className="bg-[#ff8c00] text-white px-4 py-1.5 rounded-full text-[13px] xl:text-[14px] font-semibold shadow-md hover:bg-[#ff9f2c] transition-colors duration-200 flex items-center gap-1"
@@ -255,13 +264,12 @@ const NavBar = () => {
         </div>
       </nav>
 
-      {/* Mobile Overlay + Slide-in Menu */}
+      {/* Mobile menu */}
       {menuOpen && (
         <div
           className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
           onClick={toggleMenu}
         >
-          {/* Panel */}
           <div
             className="absolute right-0 top-0 h-full w-4/5 max-w-xs bg-white shadow-2xl transform transition-transform duration-300 ease-out translate-x-0"
             onClick={(e) => e.stopPropagation()}
@@ -321,6 +329,19 @@ const NavBar = () => {
                   {t("nav.spaces")}
                 </NavLink>
               </li>
+
+              {/* ✅ NEW */}
+              {isLoggedIn && (
+                <li>
+                  <NavLink
+                    to="/dashboard/reservations"
+                    onClick={toggleMenu}
+                    className="block py-1 tracking-[0.16em] hover:text-[#ff8c00] transition-colors duration-200"
+                  >
+                    {t("nav.reservations", { defaultValue: "RESERVATIONS" })}
+                  </NavLink>
+                </li>
+              )}
 
               {user?.isAdmin && (
                 <li>

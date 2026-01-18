@@ -12,6 +12,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminRoute from "./components/AdminRoute";
 import VerifyEmail from "./pages/VerifyEmail";
 import ConfirmReservation from "./pages/ConfirmReservation.jsx";
+import YourBookings from "./pages/Dashboard/YourBookings";
 
 const router = createBrowserRouter([
   {
@@ -25,6 +26,19 @@ const router = createBrowserRouter([
       { path: "center", element: <CenterOffice /> },
       { path: "login", element: <Login /> },
       { path: "register", element: <Register /> },
+
+      // ✅ NEW MAIN PATH
+      {
+        path: "dashboard/reservations",
+        element: <YourBookings />,
+      },
+
+      // ✅ KEEP OLD PATH so nothing breaks
+      {
+        path: "dashboard/bookings",
+        element: <YourBookings />,
+      },
+
       {
         path: "admin",
         element: <AdminRoute />,

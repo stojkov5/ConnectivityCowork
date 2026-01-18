@@ -5,6 +5,11 @@ import { useTranslation } from "react-i18next";
 function Contact() {
   const { t } = useTranslation();
 
+  // If your translation includes spaces like "+389 70 123 456",
+  // tel: works better without spaces.
+  const phoneRaw = t("contact.phoneValue");
+  const phoneForTel = phoneRaw.replace(/\s+/g, "");
+
   return (
     <>
       <div className="contact-container py-40 px-6 raleway-600">
@@ -23,13 +28,34 @@ function Contact() {
 
               <div className="contact-item mb-5">
                 <p className="contact-label">{t("contact.phoneLabel")}</p>
-                <p className="contact-info">{t("contact.phoneValue")}</p>
+
+                {/* clickable phone */}
+                <a
+                  className="contact-info"
+                  href={`tel:${phoneForTel}`}
+                  aria-label={`Call ${phoneRaw}`}
+                >
+                  {phoneRaw}
+                </a>
               </div>
 
               <div className="contact-item">
                 <p className="contact-label">{t("contact.locationLabel")}</p>
-                <p className="contact-info">{t("contact.location1")}</p>
-                <p className="contact-info">{t("contact.location2")}</p>
+                <a
+                  className="contact-info"
+                  href="https://maps.app.goo.gl/sSWxuQZop9FiDmTi7"
+                  target="_blank"
+                >
+                  <p className="contact-info">{t("contact.location1")}</p>
+                </a>
+
+                <a
+                  className="contact-info"
+                  href="https://maps.app.goo.gl/Zibu72WoickBCpsN9"
+                  target="_blank"
+                >
+                  <p className="contact-info">{t("contact.location2")}</p>
+                </a>
               </div>
             </div>
           </Col>

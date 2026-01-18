@@ -42,7 +42,7 @@ const TypeOfBooking = () => {
       icon: <ClockCircleOutlined />,
       description: t("typeOfBooking.weekly.description"),
       defaultPrice: t("typeOfBooking.weekly.price"),
-      color: "#ffb84d",
+      color: "#ff8c00",
       details: t("typeOfBooking.weekly.details", { returnObjects: true }),
     },
     {
@@ -82,16 +82,15 @@ const TypeOfBooking = () => {
   return (
     <section className="type-booking-scope">
       <div className="booking-container container mx-auto">
-        <div className="booking-header">
-          <h1 className="raleway-600">{t("typeOfBooking.title")}</h1>
-          <p className="raleway-300">{t("typeOfBooking.subtitle")}</p>
-        </div>
-
         <Row gutter={[16, 16]} justify="center">
           <Col span={22}>
+            <div className="booking-header">
+              <h1 className="raleway-600">{t("typeOfBooking.title")}</h1>
+              <p className="raleway-300">{t("typeOfBooking.subtitle")}</p>
+            </div>
             <Row gutter={[16, 16]} justify="center">
               {cardData.map((card) => (
-                <Col xs={24} sm={12} md={12} lg={6} key={card.key}>
+                <Col xs={24} sm={12} md={12} lg={12} key={card.key}>
                   <div className="booking-card">
                     <div className="card-content">
                       <div className="icon" style={{ color: card.color }}>
@@ -107,7 +106,6 @@ const TypeOfBooking = () => {
                           style={{ backgroundColor: card.color }}
                           title={card.description}
                         >
-                         
                           <span className="tag-text">{card.description}</span>
                         </span>
                       </div>

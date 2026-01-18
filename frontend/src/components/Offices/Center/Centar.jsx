@@ -84,7 +84,8 @@ const computeRange = (plan, selectedDate) => {
   if (!selectedDate) return null;
   const d = dayjs(selectedDate);
 
-  if (plan === "daily") return { start: normalizeDate(d), end: normalizeDate(d) };
+  if (plan === "daily")
+    return { start: normalizeDate(d), end: normalizeDate(d) };
   if (plan === "weekly") {
     const s = d.startOf("day");
     const e = s.add(6, "day");
@@ -112,7 +113,7 @@ const Centar = ({ isLoggedInProp = null }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedSeatIds, setSelectedSeatIds] = useState([]);
- 
+
   const [companyName, setCompanyName] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [activeOfficeId, setActiveOfficeId] = useState("centar");
@@ -171,7 +172,10 @@ const Centar = ({ isLoggedInProp = null }) => {
     },
   });
 
-  const range = selectedDate && selectedPlan ? computeRange(selectedPlan, selectedDate) : null;
+  const range =
+    selectedDate && selectedPlan
+      ? computeRange(selectedPlan, selectedDate)
+      : null;
 
   const getConflictingReservationsForRange = useCallback(
     (seatId, rangeObj) => {
@@ -214,10 +218,21 @@ const Centar = ({ isLoggedInProp = null }) => {
           .map((r) => ({ start: r.startDate, end: r.endDate, type: r.type })),
       };
     });
-  }, [activeOffice, reservations, selectedDate, selectedPlan, range, selectedSeatIds, getConflictingReservationsForRange]);
+  }, [
+    activeOffice,
+    reservations,
+    selectedDate,
+    selectedPlan,
+    range,
+    selectedSeatIds,
+    getConflictingReservationsForRange,
+  ]);
 
   const selectedSeats = useMemo(
-    () => (activeOffice ? activeOffice.seats.filter((s) => selectedSeatIds.includes(s.id)) : []),
+    () =>
+      activeOffice
+        ? activeOffice.seats.filter((s) => selectedSeatIds.includes(s.id))
+        : [],
     [activeOffice, selectedSeatIds]
   );
 
@@ -240,7 +255,12 @@ const Centar = ({ isLoggedInProp = null }) => {
       }
     }
     return list;
-  }, [selectedSeatIds, range, activeOffice, getConflictingReservationsForRange]);
+  }, [
+    selectedSeatIds,
+    range,
+    activeOffice,
+    getConflictingReservationsForRange,
+  ]);
 
   const hasConflicts = conflictDetails.length > 0;
 
@@ -252,7 +272,9 @@ const Centar = ({ isLoggedInProp = null }) => {
     if (seat.status === "taken" || seat.status === "disabled") return;
 
     setSelectedSeatIds((prev) =>
-      prev.includes(seat.id) ? prev.filter((id) => id !== seat.id) : [...prev, seat.id]
+      prev.includes(seat.id)
+        ? prev.filter((id) => id !== seat.id)
+        : [...prev, seat.id]
     );
   };
 
@@ -301,7 +323,11 @@ const Centar = ({ isLoggedInProp = null }) => {
       const totalSeats = activeOffice ? activeOffice.seats.length : 0;
 
       if (bookedIds.size === totalSeats && totalSeats > 0) {
-        return <div className="calendar-dot bg-red-500 text-white">{current.date()}</div>;
+        return (
+          <div className="calendar-dot bg-red-500 text-white">
+            {current.date()}
+          </div>
+        );
       }
       if (bookedIds.size > 0) {
         return (
@@ -386,9 +412,17 @@ const Centar = ({ isLoggedInProp = null }) => {
         }
       />
     );
-  }, [isAuthenticated, selectedDate, selectedPlan, selectedSeatIds.length, hasConflicts, t]);
+  }, [
+    isAuthenticated,
+    selectedDate,
+    selectedPlan,
+    selectedSeatIds.length,
+    hasConflicts,
+    t,
+  ]);
 
-  const needsSelection = !!selectedDate && !!selectedPlan && selectedSeatIds.length === 0;
+  const needsSelection =
+    !!selectedDate && !!selectedPlan && selectedSeatIds.length === 0;
 
   const Legend = () => (
     <div className="legend-wrap">
@@ -427,6 +461,13 @@ const Centar = ({ isLoggedInProp = null }) => {
               {/* LEFT */}
               <Col xs={24} md={6}>
                 <div className="bg-white rounded-xl shadow-md p-5 space-y-5 card-hover flex flex-col gap-5">
+                  {reserveDisabled && (
+                    <div className="reserve-help">{reserveHelp}</div>
+                  )}
+                  <div className="map-hint">
+                    {mapHint}
+                    <Legend />
+                  </div>
                   <DatePicker
                     value={selectedDate}
                     onChange={(d) => {
@@ -469,11 +510,6 @@ const Centar = ({ isLoggedInProp = null }) => {
                     }))}
                   />
 
-                  <div className="map-hint">
-                    {mapHint}
-                    <Legend />
-                  </div>
-
                   <button
                     className="reserve-btn bg-orange-500 text-white"
                     disabled={reserveDisabled}
@@ -482,10 +518,13 @@ const Centar = ({ isLoggedInProp = null }) => {
                     {t("center.reserveButton")}
                   </button>
 
-                  {reserveDisabled && <div className="reserve-help">{reserveHelp}</div>}
-
                   {hasConflicts && range && (
-                    <Alert type="error" showIcon className="rounded-md" message={t("center.conflictAlert")} />
+                    <Alert
+                      type="error"
+                      showIcon
+                      className="rounded-md"
+                      message={t("center.conflictAlert")}
+                    />
                   )}
 
                   {selectedDate && (
@@ -495,15 +534,26 @@ const Centar = ({ isLoggedInProp = null }) => {
                         <>
                           {selectedDate.format("YYYY-MM-DD")}
                           <Tag color="blue" className="ml-2">
-                            {seatsWithStatus.filter((x) => x.status === "free").length}{" "}
+                            {
+                              seatsWithStatus.filter((x) => x.status === "free")
+                                .length
+                            }{" "}
                             {t("center.status.free")}
                           </Tag>
                           <Tag color="gold" className="ml-2">
-                            {seatsWithStatus.filter((x) => x.status === "selected").length}{" "}
+                            {
+                              seatsWithStatus.filter(
+                                (x) => x.status === "selected"
+                              ).length
+                            }{" "}
                             {t("center.status.selected")}
                           </Tag>
                           <Tag color="red" className="ml-2">
-                            {seatsWithStatus.filter((x) => x.status === "taken").length}{" "}
+                            {
+                              seatsWithStatus.filter(
+                                (x) => x.status === "taken"
+                              ).length
+                            }{" "}
                             {t("center.status.booked")}
                           </Tag>
                         </>
@@ -512,14 +562,16 @@ const Centar = ({ isLoggedInProp = null }) => {
                       showIcon
                     />
                   )}
-
-                 
                 </div>
               </Col>
 
               {/* RIGHT */}
               <Col xs={24} md={18}>
-                <div className={`map-container ${needsSelection ? "needs-selection" : ""}`}>
+                <div
+                  className={`map-container ${
+                    needsSelection ? "needs-selection" : ""
+                  }`}
+                >
                   <FloorPlan
                     office={activeOffice}
                     seats={seatsWithStatus}

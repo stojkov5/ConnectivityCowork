@@ -54,114 +54,151 @@ router.get("/admin/waiting", verifyToken, requireAdmin, async (req, res) => {
  * ✅ ADMIN: POST /api/reservations/admin/approve/:groupId
  * Approves the whole batch (same groupId) and turns it into CONFIRMED
  */
-router.post("/admin/approve/:groupId", verifyToken, requireAdmin, async (req, res) => {
-  try {
-    const { groupId } = req.params;
-    if (!groupId) return res.status(400).json({ message: "Missing groupId" });
-
-    const waiting = await Reservation.find({
-      groupId,
-      status: "awaiting_approval",
-    }).populate("user", "username email");
-
-    if (!waiting || waiting.length === 0) {
-      return res.status(404).json({ message: "No waiting reservations found for this group." });
-    }
-
-    const sample = waiting[0];
-
-    // Final conflict check against CONFIRMED only
-    const conflicts = await Reservation.find({
-      location: sample.location,
-      officeId: sample.officeId,
-      resourceType: sample.resourceType,
-      resourceId: { $in: waiting.map((r) => r.resourceId) },
-      status: "confirmed",
-      startDate: { $lte: sample.endDate },
-      endDate: { $gte: sample.startDate },
-    });
-
-    if (conflicts.length > 0) {
-      return res.status(409).json({
-        message: "Cannot approve: some resources are already booked in that period.",
-        conflicts,
-      });
-    }
-
-    await Reservation.updateMany(
-      { groupId, status: "awaiting_approval" },
-      {
-        $set: {
-          status: "confirmed",
-          approvedAt: new Date(),
-          approvedBy: req.user._id,
-        },
-      }
-    );
-
-    // ✅ OWNER notification happens only after admin approves
+router.post(
+  "/admin/approve/:groupId",
+  verifyToken,
+  requireAdmin,
+  async (req, res) => {
     try {
-      await sendOwnerReservationNotificationEmail(OWNER_EMAIL, {
-        reserverEmail: sample.email || sample.user?.email,
-        reserverUsername: sample.user?.username,
-        companyName: sample.companyName,
+      const { groupId } = req.params;
+      if (!groupId)
+        return res.status(400).json({ message: "Missing groupId" });
+
+      const waiting = await Reservation.find({
+        groupId,
+        status: "awaiting_approval",
+      }).populate("user", "username email");
+
+      if (!waiting || waiting.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "No waiting reservations found for this group." });
+      }
+
+      const sample = waiting[0];
+
+      // Final conflict check against CONFIRMED only
+      const conflicts = await Reservation.find({
         location: sample.location,
         officeId: sample.officeId,
         resourceType: sample.resourceType,
-        plan: sample.plan,
-        startDate: sample.startDate?.toISOString?.().slice(0, 10),
-        endDate: sample.endDate?.toISOString?.().slice(0, 10),
-        resources: waiting.map((r) => ({
-          id: r.resourceId,
-          name: r.resourceName || r.resourceId,
-        })),
-        createdAt: sample.createdAt?.toISOString?.(),
+        resourceId: { $in: waiting.map((r) => r.resourceId) },
+        status: "confirmed",
+        startDate: { $lte: sample.endDate },
+        endDate: { $gte: sample.startDate },
       });
-    } catch (e) {
-      console.error("OWNER email failed:", e);
-    }
 
-    return res.json({ message: "Approved успешно. Reservation is now booked and visible in the calendar." });
-  } catch (err) {
-    console.error("POST /api/reservations/admin/approve error:", err);
-    res.status(500).json({ message: "Server error" });
+      if (conflicts.length > 0) {
+        return res.status(409).json({
+          message:
+            "Cannot approve: some resources are already booked in that period.",
+          conflicts,
+        });
+      }
+
+      await Reservation.updateMany(
+        { groupId, status: "awaiting_approval" },
+        {
+          $set: {
+            status: "confirmed",
+            approvedAt: new Date(),
+            approvedBy: req.user._id,
+          },
+        }
+      );
+
+      // ✅ OWNER notification happens only after admin approves
+      try {
+        await sendOwnerReservationNotificationEmail(OWNER_EMAIL, {
+          reserverEmail: sample.email || sample.user?.email,
+          reserverUsername: sample.user?.username,
+          companyName: sample.companyName,
+          location: sample.location,
+          officeId: sample.officeId,
+          resourceType: sample.resourceType,
+          plan: sample.plan,
+          startDate: sample.startDate?.toISOString?.().slice(0, 10),
+          endDate: sample.endDate?.toISOString?.().slice(0, 10),
+          resources: waiting.map((r) => ({
+            id: r.resourceId,
+            name: r.resourceName || r.resourceId,
+          })),
+          createdAt: sample.createdAt?.toISOString?.(),
+        });
+      } catch (e) {
+        console.error("OWNER email failed:", e);
+      }
+
+      return res.json({
+        message:
+          "Approved успешно. Reservation is now booked and visible in the calendar.",
+      });
+    } catch (err) {
+      console.error("POST /api/reservations/admin/approve error:", err);
+      res.status(500).json({ message: "Server error" });
+    }
   }
-});
+);
 
 /**
  * ✅ ADMIN: POST /api/reservations/admin/reject/:groupId
  * Rejects the whole batch (same groupId)
  */
-router.post("/admin/reject/:groupId", verifyToken, requireAdmin, async (req, res) => {
-  try {
-    const { groupId } = req.params;
-    const { reason } = req.body || {};
-    if (!groupId) return res.status(400).json({ message: "Missing groupId" });
+router.post(
+  "/admin/reject/:groupId",
+  verifyToken,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { reason } = req.body || {};
+      if (!groupId)
+        return res.status(400).json({ message: "Missing groupId" });
 
-    const waiting = await Reservation.find({
-      groupId,
-      status: "awaiting_approval",
+      const waiting = await Reservation.find({
+        groupId,
+        status: "awaiting_approval",
+      });
+
+      if (!waiting || waiting.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "No waiting reservations found for this group." });
+      }
+
+      await Reservation.updateMany(
+        { groupId, status: "awaiting_approval" },
+        {
+          $set: {
+            status: "rejected",
+            rejectedAt: new Date(),
+            rejectedBy: req.user._id,
+            rejectionReason: reason || "Rejected by admin",
+          },
+        }
+      );
+
+      return res.json({ message: "Rejected успешно." });
+    } catch (err) {
+      console.error("POST /api/reservations/admin/reject error:", err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+
+/**
+ * ✅ USER: GET /api/reservations/my
+ * Returns ALL reservations for the logged-in user (pending/awaiting/confirmed/rejected/etc.)
+ */
+router.get("/my", verifyToken, async (req, res) => {
+  try {
+    const reservations = await Reservation.find({ user: req.user._id }).sort({
+      createdAt: -1,
     });
 
-    if (!waiting || waiting.length === 0) {
-      return res.status(404).json({ message: "No waiting reservations found for this group." });
-    }
-
-    await Reservation.updateMany(
-      { groupId, status: "awaiting_approval" },
-      {
-        $set: {
-          status: "rejected",
-          rejectedAt: new Date(),
-          rejectedBy: req.user._id,
-          rejectionReason: reason || "Rejected by admin",
-        },
-      }
-    );
-
-    return res.json({ message: "Rejected успешно." });
+    res.json({ reservations });
   } catch (err) {
-    console.error("POST /api/reservations/admin/reject error:", err);
+    console.error("GET /api/reservations/my error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -254,22 +291,18 @@ router.post("/", verifyToken, async (req, res) => {
 
     // Send confirmation email to the USER (they must click)
     try {
-      await sendReservationConfirmationEmail(
-        req.user.email,
-        confirmationToken,
-        {
-          location,
-          officeName: officeId,
-          plan,
-          startDate: start.toISOString().slice(0, 10),
-          endDate: end.toISOString().slice(0, 10),
-          companyName: companyName || "",
-          resources: resourceIds.map((id) => ({
-            id,
-            name: makeResourceName(id),
-          })),
-        }
-      );
+      await sendReservationConfirmationEmail(req.user.email, confirmationToken, {
+        location,
+        officeName: officeId,
+        plan,
+        startDate: start.toISOString().slice(0, 10),
+        endDate: end.toISOString().slice(0, 10),
+        companyName: companyName || "",
+        resources: resourceIds.map((id) => ({
+          id,
+          name: makeResourceName(id),
+        })),
+      });
     } catch (e) {
       console.error("Error sending reservation confirmation email:", e);
     }

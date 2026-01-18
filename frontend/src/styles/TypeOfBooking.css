@@ -86,23 +86,23 @@
 .type-booking-scope .custom-tag {
   width: 100%;
   max-width: 320px;
-  height: 40px; /* fixed height = stable alignment */
+  height: 50px; /* fixed height = stable alignment */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
 
   color: #fff;
   font-size: 0.9rem;
   padding: 0 12px;
   border-radius: 8px;
 
-  line-height: 1;
+  line-height: 1.5;
   text-align: center;
 
   /* keep single-line so it doesn't change card height */
   white-space: nowrap;
-  overflow: hidden;
+  
   text-overflow: ellipsis;
 }
 
@@ -114,7 +114,7 @@
 }
 
 .type-booking-scope .custom-tag .tag-text {
-  overflow: hidden;
+
   text-overflow: ellipsis;
 }
 
@@ -137,7 +137,7 @@
   width: 100%;
   margin: 0;
   padding-left: 18px;
-  text-align: left;
+  text-align: center;
 }
 
 .type-booking-scope .card-content li {

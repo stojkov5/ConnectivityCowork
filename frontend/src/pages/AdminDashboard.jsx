@@ -28,17 +28,8 @@ const PriceEditor = ({ record, onSave, saving }) => {
 
   return (
     <div style={{ display: "flex", gap: 8 }}>
-      <Input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        size="small"
-      />
-      <Button
-        size="small"
-        type="primary"
-        loading={saving}
-        onClick={() => onSave(record.key, value)}
-      >
+      <Input value={value} onChange={(e) => setValue(e.target.value)} size="small" />
+      <Button size="small" type="primary" loading={saving} onClick={() => onSave(record.key, value)}>
         Save
       </Button>
     </div>
@@ -130,12 +121,10 @@ const AdminDashboard = () => {
       });
     }
 
-    return rows.sort(
-      (a, b) => new Date(b.userConfirmedAt) - new Date(a.userConfirmedAt)
-    );
+    return rows.sort((a, b) => new Date(b.userConfirmedAt) - new Date(a.userConfirmedAt));
   }, [waitingData]);
 
-  // ✅ APPROVE
+  // ✅ APPROVE (instant UI + navbar badge update)
   const approveBatch = useMutation({
     mutationFn: async (groupId) => {
       return axios.post(
@@ -144,19 +133,39 @@ const AdminDashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
     },
+    onMutate: async (groupId) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-waiting-reservations"] });
+
+      const prevWaiting = queryClient.getQueryData(["admin-waiting-reservations"]);
+
+      // ✅ optimistic remove the whole batch from waiting list
+      queryClient.setQueryData(["admin-waiting-reservations"], (old) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((r) => (r.groupId || "NO_GROUP") !== groupId);
+      });
+
+      return { prevWaiting };
+    },
     onSuccess: (res) => {
       message.success(res.data?.message || "Approved");
+    },
+    onError: (err, groupId, ctx) => {
+      // rollback
+      if (ctx?.prevWaiting) {
+        queryClient.setQueryData(["admin-waiting-reservations"], ctx.prevWaiting);
+      }
+      const msg = err.response?.data?.message || "Approve failed";
+      message.error(msg);
+    },
+    onSettled: () => {
+      // ✅ sync everything after optimistic update
       queryClient.invalidateQueries({ queryKey: ["admin-waiting-reservations"] });
       queryClient.invalidateQueries({ queryKey: ["admin-reservations"] });
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
     },
-    onError: (err) => {
-      const msg = err.response?.data?.message || "Approve failed";
-      message.error(msg);
-    },
   });
 
-  // ✅ REJECT
+  // ✅ REJECT (instant UI + navbar badge update)
   const rejectBatch = useMutation({
     mutationFn: async ({ groupId, reason }) => {
       return axios.post(
@@ -165,14 +174,33 @@ const AdminDashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
     },
+    onMutate: async ({ groupId }) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-waiting-reservations"] });
+
+      const prevWaiting = queryClient.getQueryData(["admin-waiting-reservations"]);
+
+      // ✅ optimistic remove the whole batch from waiting list
+      queryClient.setQueryData(["admin-waiting-reservations"], (old) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((r) => (r.groupId || "NO_GROUP") !== groupId);
+      });
+
+      return { prevWaiting };
+    },
     onSuccess: (res) => {
       message.success(res.data?.message || "Rejected");
-      queryClient.invalidateQueries({ queryKey: ["admin-waiting-reservations"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-reservations"] });
     },
-    onError: (err) => {
+    onError: (err, vars, ctx) => {
+      // rollback
+      if (ctx?.prevWaiting) {
+        queryClient.setQueryData(["admin-waiting-reservations"], ctx.prevWaiting);
+      }
       const msg = err.response?.data?.message || "Reject failed";
       message.error(msg);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-waiting-reservations"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-reservations"] });
     },
   });
 
@@ -196,9 +224,7 @@ const AdminDashboard = () => {
       return axios.put(
         `${API_URL}/api/plans/${key}`,
         { price },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
     },
     onSuccess: () => {
@@ -223,8 +249,8 @@ const AdminDashboard = () => {
     },
     onSuccess: () => {
       message.success("Default plans seeded");
-      queryClient.invalidateQueries(["admin-plans"]);
-      queryClient.invalidateQueries(["plans"]);
+      queryClient.invalidateQueries({ queryKey: ["admin-plans"] });
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
     },
     onError: (err) => {
       const msg = err.response?.data?.message || "Failed to seed plans";
@@ -253,11 +279,7 @@ const AdminDashboard = () => {
   ];
 
   const reservationColumns = [
-    {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-    },
+    { title: "Email", dataIndex: "email", key: "email" },
     {
       title: "Status",
       dataIndex: "status",
@@ -282,104 +304,48 @@ const AdminDashboard = () => {
       dataIndex: "location",
       key: "location",
       render: (loc) =>
-        loc === "centar"
-          ? "Centar"
-          : loc === "kiselavoda"
-          ? "Kisela Voda"
-          : loc,
+        loc === "centar" ? "Centar" : loc === "kiselavoda" ? "Kisela Voda" : loc,
     },
-    {
-      title: "Office",
-      dataIndex: "officeId",
-      key: "officeId",
-    },
+    { title: "Office", dataIndex: "officeId", key: "officeId" },
     {
       title: "Type",
       dataIndex: "resourceType",
       key: "resourceType",
-      render: (v) =>
-        v === "room" ? (
-          <Tag color="geekblue">ROOM</Tag>
-        ) : (
-          <Tag color="green">SEAT</Tag>
-        ),
+      render: (v) => (v === "room" ? <Tag color="geekblue">ROOM</Tag> : <Tag color="green">SEAT</Tag>),
       responsive: ["sm"],
     },
-    {
-      title: "Resource",
-      dataIndex: "resourceId",
-      key: "resourceId",
-      responsive: ["sm"],
-    },
+    { title: "Resource", dataIndex: "resourceId", key: "resourceId", responsive: ["sm"] },
     {
       title: "Plan",
       dataIndex: "plan",
       key: "plan",
       render: (plan) => {
-        const color =
-          plan === "daily" ? "blue" : plan === "weekly" ? "purple" : "orange";
+        const color = plan === "daily" ? "blue" : plan === "weekly" ? "purple" : "orange";
         return <Tag color={color}>{plan.toUpperCase()}</Tag>;
       },
     },
-    {
-      title: "From",
-      dataIndex: "startDate",
-      key: "startDate",
-      render: (d) => dayjs(d).format("YYYY-MM-DD"),
-    },
-    {
-      title: "To",
-      dataIndex: "endDate",
-      key: "endDate",
-      render: (d) => dayjs(d).format("YYYY-MM-DD"),
-      responsive: ["sm"],
-    },
-    {
-      title: "Company",
-      dataIndex: "companyName",
-      key: "companyName",
-      render: (v) => v || "-",
-      responsive: ["md"],
-    },
-    {
-      title: "Created",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      render: (v) => dayjs(v).format("YYYY-MM-DD HH:mm"),
-      responsive: ["lg"],
-    },
+    { title: "From", dataIndex: "startDate", key: "startDate", render: (d) => dayjs(d).format("YYYY-MM-DD") },
+    { title: "To", dataIndex: "endDate", key: "endDate", render: (d) => dayjs(d).format("YYYY-MM-DD"), responsive: ["sm"] },
+    { title: "Company", dataIndex: "companyName", key: "companyName", render: (v) => v || "-", responsive: ["md"] },
+    { title: "Created", dataIndex: "createdAt", key: "createdAt", render: (v) => dayjs(v).format("YYYY-MM-DD HH:mm"), responsive: ["lg"] },
   ];
 
   const waitingColumns = [
     { title: "Email", dataIndex: "email", key: "email" },
-    {
-      title: "User",
-      dataIndex: "username",
-      key: "username",
-      responsive: ["md"],
-    },
+    { title: "User", dataIndex: "username", key: "username", responsive: ["md"] },
     {
       title: "Location",
       dataIndex: "location",
       key: "location",
       render: (loc) =>
-        loc === "centar"
-          ? "Centar"
-          : loc === "kiselavoda"
-          ? "Kisela Voda"
-          : loc,
+        loc === "centar" ? "Centar" : loc === "kiselavoda" ? "Kisela Voda" : loc,
     },
     { title: "Office", dataIndex: "officeId", key: "officeId", responsive: ["sm"] },
     {
       title: "Type",
       dataIndex: "resourceType",
       key: "resourceType",
-      render: (v) =>
-        v === "room" ? (
-          <Tag color="geekblue">ROOM</Tag>
-        ) : (
-          <Tag color="green">SEAT</Tag>
-        ),
+      render: (v) => (v === "room" ? <Tag color="geekblue">ROOM</Tag> : <Tag color="green">SEAT</Tag>),
       responsive: ["sm"],
     },
     {
@@ -398,31 +364,13 @@ const AdminDashboard = () => {
       dataIndex: "plan",
       key: "plan",
       render: (plan) => {
-        const color =
-          plan === "daily" ? "blue" : plan === "weekly" ? "purple" : "orange";
+        const color = plan === "daily" ? "blue" : plan === "weekly" ? "purple" : "orange";
         return <Tag color={color}>{plan.toUpperCase()}</Tag>;
       },
     },
-    {
-      title: "From",
-      dataIndex: "startDate",
-      key: "startDate",
-      render: (d) => dayjs(d).format("YYYY-MM-DD"),
-    },
-    {
-      title: "To",
-      dataIndex: "endDate",
-      key: "endDate",
-      render: (d) => dayjs(d).format("YYYY-MM-DD"),
-      responsive: ["sm"],
-    },
-    {
-      title: "Confirmed by user",
-      dataIndex: "userConfirmedAt",
-      key: "userConfirmedAt",
-      render: (d) => (d ? dayjs(d).format("YYYY-MM-DD HH:mm") : "-"),
-      responsive: ["md"],
-    },
+    { title: "From", dataIndex: "startDate", key: "startDate", render: (d) => dayjs(d).format("YYYY-MM-DD") },
+    { title: "To", dataIndex: "endDate", key: "endDate", render: (d) => dayjs(d).format("YYYY-MM-DD"), responsive: ["sm"] },
+    { title: "Confirmed by user", dataIndex: "userConfirmedAt", key: "userConfirmedAt", render: (d) => (d ? dayjs(d).format("YYYY-MM-DD HH:mm") : "-"), responsive: ["md"] },
     {
       title: "Actions",
       key: "actions",
@@ -501,7 +449,6 @@ const AdminDashboard = () => {
   const today = dayjs().startOf("day");
 
   const confirmedReservations = useMemo(() => {
-    // we only care about confirmed for these “Upcoming/Past” tables
     return (reservationsData || []).filter((r) => r.status === "confirmed");
   }, [reservationsData]);
 
@@ -521,11 +468,10 @@ const AdminDashboard = () => {
   const pastByMonth = useMemo(() => {
     const map = new Map();
     for (const r of past) {
-      const key = dayjs(r.endDate).format("YYYY-MM"); // month bucket
+      const key = dayjs(r.endDate).format("YYYY-MM");
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(r);
     }
-    // Convert to sorted list (newest month first)
     return Array.from(map.entries())
       .sort((a, b) => (a[0] < b[0] ? 1 : -1))
       .map(([key, list]) => ({
@@ -551,20 +497,14 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen pt-24 px-3 sm:px-4 md:px-8 lg:px-16 bg-gray-50">
       <div className="max-w-7xl mx-auto">
-        <Title
-          level={2}
-          className="text-2xl! sm:text-3xl! mb-4! sm:mb-6! md:mb-8!"
-        >
+        <Title level={2} className="text-2xl! sm:text-3xl! mb-4! sm:mb-6! md:mb-8!">
           Admin Dashboard
         </Title>
 
         {/* 1) WAITING APPROVAL */}
         <Divider>
           Waiting Approval{" "}
-          <Badge
-            count={waitingGroups.length}
-            style={{ backgroundColor: "#faad14" }}
-          />
+          <Badge count={waitingGroups.length} style={{ backgroundColor: "#faad14" }} />
         </Divider>
         <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-8 sm:mb-12">
           {waitingError && (
@@ -609,16 +549,12 @@ const AdminDashboard = () => {
         {/* 3) UPCOMING / CURRENT CONFIRMED RESERVATIONS */}
         <Divider>
           Reservations (Upcoming / Current){" "}
-          <Badge
-            count={upcomingOrCurrent.length}
-            style={{ backgroundColor: "#52c41a" }}
-          />
+          <Badge count={upcomingOrCurrent.length} style={{ backgroundColor: "#52c41a" }} />
         </Divider>
         <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-8 sm:mb-12">
           {reservationsError && (
             <div className="mb-2 text-red-500 text-sm">
-              {reservationsError.response?.data?.message ||
-                reservationsError.message}
+              {reservationsError.response?.data?.message || reservationsError.message}
             </div>
           )}
           <div className="w-full overflow-x-auto">
@@ -636,8 +572,7 @@ const AdminDashboard = () => {
 
         {/* 4) PAST RESERVATIONS (ACCORDION) */}
         <Divider>
-          Past Reservations{" "}
-          <Badge count={past.length} style={{ backgroundColor: "#8c8c8c" }} />
+          Past Reservations <Badge count={past.length} style={{ backgroundColor: "#8c8c8c" }} />
         </Divider>
         <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-8 sm:mb-12">
           {pastByMonth.length === 0 ? (
@@ -683,8 +618,7 @@ const AdminDashboard = () => {
               Seed default plans
             </Button>
             <span className="text-gray-500 text-xs sm:text-sm">
-              Click once on a fresh DB. If plans already exist, it will show an
-              error message.
+              Click once on a fresh DB. If plans already exist, it will show an error message.
             </span>
           </div>
 

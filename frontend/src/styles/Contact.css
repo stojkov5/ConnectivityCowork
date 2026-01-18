@@ -1,9 +1,14 @@
 .contact-container {
   background: #ff8c00;
 
-    display: flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+}
+
+
+.contact-info:hover {
+  text-decoration: underline;
 }
 
 /* Info Box */
@@ -43,7 +48,12 @@
   color: #666;
   background: linear-gradient(
     to bottom right,
-    rgba(255,127,35,0.2),
-    rgba(255,127,35,0.05)
+    rgba(255, 127, 35, 0.2),
+    rgba(255, 127, 35, 0.05)
   );
+}
+.contact-info:hover {
+  
+  cursor: pointer;
+  color: #ff7f23;
 }
