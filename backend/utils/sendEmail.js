@@ -1,41 +1,63 @@
 // backend/utils/sendEmail.js
-import sgMail from "@sendgrid/mail";
+import { Resend } from "resend";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const { SENDGRID_API_KEY, SENDGRID_FROM_EMAIL, FRONTEND_URL } = process.env;
+const { RESEND_API_KEY, FROM_EMAIL, FRONTEND_URL } = process.env;
 
-let sendGridReady = false;
+let resend = null;
+let emailReady = false;
 
-if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL || !FRONTEND_URL) {
+if (!RESEND_API_KEY || !FROM_EMAIL || !FRONTEND_URL) {
   console.log(
-    "[sendEmail] Missing SENDGRID_API_KEY, SENDGRID_FROM_EMAIL or FRONTEND_URL in env"
+    "[sendEmail] Missing RESEND_API_KEY, FROM_EMAIL or FRONTEND_URL in env"
   );
 } else {
-  if (!SENDGRID_API_KEY.startsWith("SG.")) {
+  if (!RESEND_API_KEY.startsWith("re_")) {
     console.log(
-      '[sendEmail] Warning: SENDGRID_API_KEY does not start with "SG." – double-check it.'
+      '[sendEmail] Warning: RESEND_API_KEY does not start with "re_" – double-check it.'
     );
   }
-  sgMail.setApiKey(SENDGRID_API_KEY);
-  sendGridReady = true;
+  resend = new Resend(RESEND_API_KEY);
+  emailReady = true;
 }
 
-const frontBase = FRONTEND_URL.replace(/\/$/, "");
+const frontBase = (FRONTEND_URL || "").replace(/\/$/, "");
+
+// Resend returns { data, error } instead of throwing. This helper restores
+// throw-on-failure so the existing try/catch blocks in the routes keep working.
+const deliver = async ({ to, subject, text, html }) => {
+  const { data, error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject,
+    text,
+    html,
+  });
+
+  if (error) {
+    throw new Error(
+      `[Resend] Failed to send "${subject}": ${
+        error.message || JSON.stringify(error)
+      }`
+    );
+  }
+
+  return data;
+};
 
 // ========== USER EMAIL VERIFICATION ==========
 export const sendVerificationEmail = async (toEmail, token) => {
-  if (!sendGridReady) {
+  if (!emailReady) {
     console.log("[sendVerificationEmail] Missing configuration, skipping.");
     return;
   }
 
   const verifyUrl = `${frontBase}/verify/${token}`;
 
-  const msg = {
+  await deliver({
     to: toEmail,
-    from: SENDGRID_FROM_EMAIL,
     subject: "Verify your Connectivity account",
     text: `Click the link to verify your account: ${verifyUrl}`,
     html: `
@@ -51,14 +73,12 @@ export const sendVerificationEmail = async (toEmail, token) => {
       <p><a href="${verifyUrl}">${verifyUrl}</a></p>
       <p>This link is valid for 24 hours.</p>
     `,
-  };
-
-  await sgMail.send(msg);
+  });
 };
 
 // ========== RESERVATION CONFIRMATION EMAIL (TO USER) ==========
 export const sendReservationConfirmationEmail = async (toEmail, token, details) => {
-  if (!sendGridReady) {
+  if (!emailReady) {
     console.log(
       "[sendReservationConfirmationEmail] Missing configuration, skipping."
     );
@@ -84,9 +104,8 @@ export const sendReservationConfirmationEmail = async (toEmail, token, details) 
 
   const prettyLocation = location === "kiselavoda" ? "Kisela Voda" : "Centar";
 
-  const msg = {
+  await deliver({
     to: toEmail,
-    from: SENDGRID_FROM_EMAIL,
     subject: "Confirm your cowork reservation",
     text: `You requested a reservation at ${prettyLocation} (${officeName}) from ${startDate} to ${endDate} (${plan}). Confirm here: ${confirmUrl}`,
     html: `
@@ -109,14 +128,12 @@ export const sendReservationConfirmationEmail = async (toEmail, token, details) 
       <p><a href="${confirmUrl}">${confirmUrl}</a></p>
       <p>This link is valid for 24 hours. If you do nothing, the reservation will not be created.</p>
     `,
-  };
-
-  await sgMail.send(msg);
+  });
 };
 
 // ========== OWNER NOTIFICATION (AFTER USER CONFIRMS) ==========
 export const sendOwnerReservationNotificationEmail = async (ownerEmail, data) => {
-  if (!sendGridReady) {
+  if (!emailReady) {
     console.log(
       "[sendOwnerReservationNotificationEmail] Missing configuration, skipping."
     );
@@ -199,11 +216,5 @@ export const sendOwnerReservationNotificationEmail = async (ownerEmail, data) =>
     </div>
   `;
 
-  await sgMail.send({
-    to: ownerEmail,
-    from: SENDGRID_FROM_EMAIL, // MUST be verified in SendGrid
-    subject,
-    text,
-    html,
-  });
+  await deliver({ to: ownerEmail, subject, text, html });
 };

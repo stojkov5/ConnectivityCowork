@@ -3,14 +3,11 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  // this stays, because your project is under /ConnectivityCowork/
+  // Served from the domain root (custom domain konnectivity.mk).
   base: "/",
 
-  build: {
-    // output *one level up* into /docs at the repo root
-    outDir: "../docs",
-    emptyOutDir: true, // clears old build in docs
-  },
-
+  // Default output dir "dist". Vercel serves this (see vercel.json
+  // outputDirectory: "frontend/dist"). Previously this built into ../docs
+  // for GitHub Pages, which we no longer use.
   plugins: [react(), tailwindcss()],
 });
