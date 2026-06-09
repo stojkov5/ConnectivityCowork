@@ -20,7 +20,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 const { Title } = Typography;
 const { Panel } = Collapse;
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 // Inline editor for plan price
 const PriceEditor = ({ record, onSave, saving }) => {

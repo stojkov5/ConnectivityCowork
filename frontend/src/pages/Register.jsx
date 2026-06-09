@@ -13,7 +13,7 @@ function Register() {
 
   const registerMutation = useMutation({
     mutationFn: (newUser) =>
-      axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, newUser),
+      axios.post(`${import.meta.env.VITE_API_URL || ""}/api/auth/register`, newUser),
     onSuccess: (res) => {
       setMessage(
         res.data.message ||

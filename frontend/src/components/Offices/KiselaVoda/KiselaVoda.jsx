@@ -12,7 +12,7 @@ import { useAuth } from "../../../context/AuthContext.jsx";
 import { useTranslation } from "react-i18next";
 import "../../../styles/KiselaVoda.css";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "";
 const base = import.meta.env.BASE_URL;
 
 const ROOMS = [

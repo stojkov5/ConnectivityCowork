@@ -16,7 +16,7 @@ const LANGUAGES = [
   { code: "mk", label: "MK" },
 ];
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 const NavBar = () => {
   const [menuOpen, setMenuOpen] = useState(false);

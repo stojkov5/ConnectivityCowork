@@ -13,7 +13,7 @@ const VerifyEmail = () => {
     enabled: !!token,
     queryFn: async () => {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/auth/verify/${token}`
+        `${import.meta.env.VITE_API_URL || ""}/api/auth/verify/${token}`
       );
       return res.data;
     },
