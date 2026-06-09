@@ -5,7 +5,10 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
 import User from "../models/User.js";
-import { sendVerificationEmail } from "../utils/sendEmail.js";
+import {
+  sendVerificationEmail,
+  sendNewUserNotificationEmail,
+} from "../utils/sendEmail.js";
 
 const router = express.Router();
 
@@ -49,6 +52,13 @@ router.post("/register", async (req, res) => {
     } catch (e) {
       console.error("Error sending verification email:", e);
       // user still exists; email just failed. We still force verify on login.
+    }
+
+    // Notify the owners/admins that a new user registered.
+    try {
+      await sendNewUserNotificationEmail({ username, email });
+    } catch (e) {
+      console.error("Error sending new-user admin notification:", e);
     }
 
     return res.status(201).json({

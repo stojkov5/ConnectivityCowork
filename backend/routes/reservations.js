@@ -7,11 +7,10 @@ import { computeRange } from "../utils/dateRange.js";
 import {
   sendReservationConfirmationEmail,
   sendOwnerReservationNotificationEmail,
+  sendBookingAwaitingApprovalEmail,
 } from "../utils/sendEmail.js";
 
 const router = express.Router();
-
-const OWNER_EMAIL = "coworkkonnectivityskopje@gmail.com";
 
 // helper: resource display (optional)
 const makeResourceName = (resourceId) => resourceId;
@@ -109,7 +108,7 @@ router.post(
 
       // ✅ OWNER notification happens only after admin approves
       try {
-        await sendOwnerReservationNotificationEmail(OWNER_EMAIL, {
+        await sendOwnerReservationNotificationEmail({
           reserverEmail: sample.email || sample.user?.email,
           reserverUsername: sample.user?.username,
           companyName: sample.companyName,
@@ -376,7 +375,27 @@ router.get("/confirm/:token", async (req, res) => {
       }
     );
 
-    // ❌ DO NOT notify owner here anymore (spam). Owner is notified on ADMIN APPROVE.
+    // Notify owners/admins that a booking is confirmed and awaiting approval.
+    try {
+      await sendBookingAwaitingApprovalEmail({
+        reserverEmail: sample.email || sample.user?.email,
+        reserverUsername: sample.user?.username,
+        companyName: sample.companyName,
+        location: sample.location,
+        officeId: sample.officeId,
+        resourceType: sample.resourceType,
+        plan: sample.plan,
+        startDate: sample.startDate?.toISOString?.().slice(0, 10),
+        endDate: sample.endDate?.toISOString?.().slice(0, 10),
+        resources: pending.map((r) => ({
+          id: r.resourceId,
+          name: r.resourceName || r.resourceId,
+        })),
+        createdAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error("Awaiting-approval owner email failed:", e);
+    }
 
     return res.json({
       message:

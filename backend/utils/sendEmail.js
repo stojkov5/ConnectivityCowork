@@ -25,6 +25,13 @@ if (!RESEND_API_KEY || !FROM_EMAIL || !FRONTEND_URL) {
 
 const frontBase = (FRONTEND_URL || "").replace(/\/$/, "");
 
+// Internal notification recipients (your admin inbox + the business inbox).
+// Comma-separated in OWNER_EMAILS; falls back to the original business address.
+const OWNER_EMAILS = (process.env.OWNER_EMAILS || "coworkkonnectivityskopje@gmail.com")
+  .split(",")
+  .map((e) => e.trim())
+  .filter(Boolean);
+
 // Resend returns { data, error } instead of throwing. This helper restores
 // throw-on-failure so the existing try/catch blocks in the routes keep working.
 const deliver = async ({ to, subject, text, html }) => {
@@ -132,7 +139,7 @@ export const sendReservationConfirmationEmail = async (toEmail, token, details) 
 };
 
 // ========== OWNER NOTIFICATION (AFTER USER CONFIRMS) ==========
-export const sendOwnerReservationNotificationEmail = async (ownerEmail, data) => {
+export const sendOwnerReservationNotificationEmail = async (data) => {
   if (!emailReady) {
     console.log(
       "[sendOwnerReservationNotificationEmail] Missing configuration, skipping."
@@ -216,5 +223,123 @@ export const sendOwnerReservationNotificationEmail = async (ownerEmail, data) =>
     </div>
   `;
 
-  await deliver({ to: ownerEmail, subject, text, html });
+  await deliver({ to: OWNER_EMAILS, subject, text, html });
+};
+
+// ========== ADMIN: NEW USER REGISTERED ==========
+export const sendNewUserNotificationEmail = async (user) => {
+  if (!emailReady) {
+    console.log("[sendNewUserNotificationEmail] Missing configuration, skipping.");
+    return;
+  }
+
+  const { username, email } = user || {};
+
+  await deliver({
+    to: OWNER_EMAILS,
+    subject: `New registration: ${username || email || "unknown user"}`,
+    text: [
+      "A new user just registered on Konnectivity Cowork.",
+      "",
+      `Username: ${username || "-"}`,
+      `Email: ${email || "-"}`,
+    ].join("\n"),
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.5;">
+        <h2 style="margin: 0 0 10px;">New user registered ✅</h2>
+        <p style="margin: 0;">
+          <strong>Username:</strong> ${username || "-"}<br/>
+          <strong>Email:</strong> ${email || "-"}
+        </p>
+      </div>
+    `,
+  });
+};
+
+// ========== ADMIN: BOOKING AWAITING APPROVAL (USER JUST CONFIRMED) ==========
+export const sendBookingAwaitingApprovalEmail = async (data) => {
+  if (!emailReady) {
+    console.log(
+      "[sendBookingAwaitingApprovalEmail] Missing configuration, skipping."
+    );
+    return;
+  }
+
+  const {
+    reserverEmail,
+    reserverUsername,
+    companyName,
+    location,
+    officeId,
+    resourceType,
+    plan,
+    startDate,
+    endDate,
+    resources,
+    createdAt,
+  } = data;
+
+  const prettyLocation = location === "kiselavoda" ? "Kisela Voda" : "Centar";
+
+  const resourceListText =
+    Array.isArray(resources) && resources.length
+      ? resources.map((r) => `- ${r.name || r.id}`).join("\n")
+      : "- (none)";
+
+  const resourceListHtml =
+    Array.isArray(resources) && resources.length
+      ? resources.map((r) => `<li>${r.name || r.id}</li>`).join("")
+      : "<li>(none)</li>";
+
+  const subject = `Action needed: booking awaiting approval (${prettyLocation} • ${officeId})`;
+
+  const text = [
+    "A booking was confirmed by the user and is awaiting your approval.",
+    "--------------------------------",
+    `Location: ${prettyLocation}`,
+    `OfficeId: ${officeId || "-"}`,
+    `Resource type: ${resourceType || "-"}`,
+    `Plan: ${plan || "-"}`,
+    `Dates: ${startDate} -> ${endDate}`,
+    "",
+    `User: ${reserverUsername || "-"}`,
+    `User email: ${reserverEmail || "-"}`,
+    `Company: ${companyName || "-"}`,
+    "",
+    "Resources:",
+    resourceListText,
+    "",
+    `Confirmed at: ${createdAt || "-"}`,
+  ].join("\n");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.5;">
+      <h2 style="margin: 0 0 10px;">Booking awaiting your approval ⏳</h2>
+
+      <p style="margin: 0 0 10px;">
+        <strong>Location:</strong> ${prettyLocation}<br/>
+        <strong>OfficeId:</strong> ${officeId || "-"}<br/>
+        <strong>Resource type:</strong> ${resourceType || "-"}<br/>
+        <strong>Plan:</strong> ${plan || "-"}<br/>
+        <strong>Dates:</strong> ${startDate} → ${endDate}
+      </p>
+
+      <p style="margin: 0 0 10px;">
+        <strong>User:</strong> ${reserverUsername || "-"}<br/>
+        <strong>User email:</strong> ${reserverEmail || "-"}<br/>
+        <strong>Company:</strong> ${companyName || "-"}
+      </p>
+
+      <p style="margin: 0 0 6px;"><strong>Resources:</strong></p>
+      <ul style="margin-top: 0;">
+        ${resourceListHtml}
+      </ul>
+
+      <p style="margin: 10px 0 0; color:#666; font-size: 12px;">
+        Confirmed at: ${createdAt || "-"} — approve it from your admin dashboard.
+      </p>
+    </div>
+  `;
+
+  await deliver({ to: OWNER_EMAILS, subject, text, html });
 };
